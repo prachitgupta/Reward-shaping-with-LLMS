@@ -1,0 +1,9 @@
+boto3==1.28.57
+requests==2.31.0
+gymnasium==0.29.0
+highway-env==1.5
+pandas==2.1.1
+tqdm==4.66.1
+stable-baselines3==1.7.0
+matplotlib==3.8.0
+numpy==1.23.5
