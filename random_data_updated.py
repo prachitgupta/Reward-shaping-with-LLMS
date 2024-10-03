@@ -283,23 +283,14 @@ if __name__ == "__main__":
     print(f"Observation space: {env.observation_space}")
     print(f"Action space: {env.action_space}")
 
-    # # Generate the dataset
-    # generate_dataset_with_claude(
-    #     env=env,
-    #     file_name='highway_dataset_claude.csv',
-    #     episodes=500,
-    #     samples_per_episode=10,
-    #     vehicleCount_range=(3, 10),
-    #     vehicles_density_range=(1, 5),
-    #     duration_range=(30, 60)
-    # )
+    # Generate the dataset
+    generate_dataset_with_claude(
+        env=env,
+        file_name='highway_dataset_claude.csv',
+        episodes=500,
+        samples_per_episode=10,
+        vehicleCount_range=(3, 10),
+        vehicles_density_range=(1, 5),
+        duration_range=(30, 60)
+    )
     
-    generate_dataset_with_groq(
-    env=env,
-    file_name='highway_dataset_groq.csv',
-    episodes=50,               # Number of episodes
-    samples_per_episode=10,     # Number of samples per episode
-    vehicleCount_range=(3, 10), # Range for number of vehicles
-    vehicles_density_range=(1, 5), # Range for vehicle density
-    duration_range=(30, 60) 
-    )# Range for simulation duration in seconds)
