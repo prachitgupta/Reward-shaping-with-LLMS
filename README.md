@@ -30,8 +30,8 @@ python3 random_data_updated.py
 ```
 Modify Hyperparameters:
 
-Adjust hyperparameters such as episodes, samples_per_episode, vehicleCount_range, etc., directly in the script or pass them as command-line arguments (if implemented).
+Adjust hyperparameters such as episodes, samples_per_episode, vehicleCount_range,
 
 Check the Generated Dataset:
 
-The generated dataset will be saved as a CSV file in the datasets directory. Verify the data and use it for training, testing, or other analyses.
+The generated dataset will be saved as a CSV file in the datasets directory. V
