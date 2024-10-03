@@ -15,6 +15,7 @@ All necessary dependencies are listed in the `requirements.txt` file. To install
 
 ```bash
 pip install -r requirements.txt
+```
 
 ## Generating Datasets with LLM
 
@@ -24,13 +25,13 @@ Run the Dataset Generation Script:
 
 Run the dataset generation script with your desired configurations:
 
-bash
-Copy code
-python generate_dataset.py
+```bash
+python3 random_data_updated.py 
+```
 Modify Hyperparameters:
 
-Adjust hyperparameters such as episodes, samples_per_episode, vehicleCount_range, etc., directly in the script or pass them as command-line arguments (if implemented).
+Adjust hyperparameters such as episodes, samples_per_episode, vehicleCount_range,
 
 Check the Generated Dataset:
 
-The generated dataset will be saved as a CSV file in the datasets directory. Verify the data and use it for training, testing, or other analyses.
+The generated dataset will be saved as a CSV file in the datasets directory. 
