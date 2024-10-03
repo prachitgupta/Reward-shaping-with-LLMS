@@ -5,21 +5,16 @@ import boto3
 import json
 import random
 import pandas as pd
-from tqdm import trange
-from stable_baselines3 import DQN
 from botocore.exceptions import ClientError
-from matplotlib import pyplot as plt
 import numpy as np
-from groq import *
+
 # Environment
 import gymnasium as gym
 import highway_env
+from tqdm import trange
 
 # Register highway environment
 gym.register_envs(highway_env)
-
-# Agent
-from stable_baselines3 import DQN
 
 
 # Define Boto3 client for Bedrock
@@ -135,7 +130,7 @@ def generate_dataset_with_claude(env, file_name, episodes=500, samples_per_episo
     observations, actions = [], []
     base_config = env.config.copy()
 
-    for episode in trange(episodes, desc="Dataset Generation"):
+    for episode in trange(episodes, desc= "dataset completion"):
         for _ in range(samples_per_episode):
             randomize_env_config(env, base_config, vehicleCount_range, vehicles_density_range, duration_range)
             obs = env.reset()
@@ -274,7 +269,7 @@ class MyHighwayEnvLLM(gym.Env):
         obs = self.env.reset(**kwargs)
         return obs
     
-            
+    
 
 if __name__ == "__main__":
     env = MyHighwayEnvLLM(vehicleCount=5)
@@ -293,4 +288,3 @@ if __name__ == "__main__":
         vehicles_density_range=(1, 5),
         duration_range=(30, 60)
     )
-    
