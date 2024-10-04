@@ -103,8 +103,8 @@ def save_and_go(observations, actions, file_name):
     """
     Saves the generated dataset to a CSV file.
     """
-    observations = np.array(observations)
-    actions = np.array(actions)
+    # observations = np.array(observations)
+    # actions = np.array(actions)
 
     data = pd.DataFrame(observations)
     data['action'] = actions
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     generate_dataset_with_claude(
         env=env,
         file_name='highway_dataset_claude.csv',
-        episodes=500,
+        episodes=1000,
         samples_per_episode=10,
         vehicleCount_range=(3, 10),
         vehicles_density_range=(1, 5),
