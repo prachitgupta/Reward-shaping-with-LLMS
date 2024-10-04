@@ -177,8 +177,7 @@ class MyHighwayEnvLLM(gym.Env):
             "show_trajectories": True,
             "render_agent": True,
         }
-        self.env = gym.make("highway-fast-v0")
-        self.env.configure(self.config)
+        self.env = gym.make("highway-fast-v0",config= self.config)
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(10, 5), dtype=np.float32)
 
