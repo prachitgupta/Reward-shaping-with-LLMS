@@ -1,6 +1,6 @@
 boto3==1.28.57
 requests==2.31.0
 gymnasium==0.29.0
-highway-env==1.5
+highway-env==1.10.1
 pandas==2.1.1
 numpy==1.23.5

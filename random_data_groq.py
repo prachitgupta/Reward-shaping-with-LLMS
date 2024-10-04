@@ -17,54 +17,22 @@ from tqdm import trange
 gym.register_envs(highway_env)
 
 
-# Define Boto3 client for Bedrock
-client = boto3.client("bedrock-runtime", region_name="us-east-1")
-model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+from groq import *
 
-# Claude API settings
-CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
-CLAUDE_API_URL = 'https://api.anthropic.com/v1/complete'
+client = Groq(api_key = "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")
 
+def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
 
-def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sample=50, temperature=0.7):
-    """
-    Sends prompts to Claude.ai and retrieves the recommended action.
-    """
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {CLAUDE_API_KEY}',
-    }
-
-    full_prompt = f"{prompt1}\n\n{assist1}\n\n{prompt2}"
+    chat_completion = client.chat.completions.create(messages=[{"role": "user", "content": prompt1},
+                                                           {"role": "assistant", "content": assist1},
+                                                           {"role": "user", "content": prompt2}], model="llama3-groq-70b-8192-tool-use-preview")
     
-    native_request = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 1024,
-        "temperature": 0,
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": full_prompt}],
-            }
-        ],
-    }
-    request = json.dumps(native_request)
     try:
-        response = client.invoke_model(modelId=model_id, body=request)
-        model_response = json.loads(response["body"].read())
-        response_json = model_response["content"][0]["text"]
+        action = chat_completion.choices[0].message.content.strip().split('Final decision: ')[1].strip().split('\'')[0]
+    except:
+        action = last_act
 
-        action_text = response_json.get('completion', '').strip()
-        if 'Final decision:' in action_text:
-            action = action_text.split('Final decision:')[-1].strip().upper()
-            return action
-        else:
-            print(f"Unexpected response format: {action_text}")
-            return 'IDLE'
-    except requests.exceptions.RequestException as e:
-        print(f"Error communicating with Claude.ai: {e}")
-        time.sleep(1)
-        return 'IDLE'
+    return action
 
 
 def randomize_env_config(env, base_config, vehicleCount_range=(3, 10), vehicles_density_range=(1, 5), spacing=(1, 3), duration_range=(30, 60)):
@@ -85,6 +53,8 @@ def randomize_env_config(env, base_config, vehicleCount_range=(3, 10), vehicles_
 
     env.reset()
     #print(f"Configuration after reset: {env.config}")
+
+
 
 def map_llm_action_to_label(llm_act):
     """
@@ -120,34 +90,66 @@ def save_and_go(observations, actions, file_name):
     print(f"Dataset saved to {dataset_path}")
 
 
-def generate_dataset_with_claude(env, file_name, episodes=500, samples_per_episode=10,
-                                 vehicleCount_range=(3, 10), vehicles_density_range=(1, 5), duration_range=(30, 60)):
+def generate_dataset_with_groq(env, file_name, episodes=500, samples_per_episode=10,
+                                 vehicleCount_range=(3, 10),
+                                 vehicles_density_range=(1, 5),
+                                 duration_range=(30, 60)):
     """
     Generates a labeled dataset by randomizing environment configurations,
     capturing observations, using Claude.ai for action recommendations,
     labeling actions, and saving the dataset.
+
+    Parameters:
+        env (gym.Env): The Gym environment instance.
+        file_name (str): The name of the CSV file to save the dataset.
+        episodes (int): Number of episodes to run.
+        samples_per_episode (int): Number of samples (configurations) per episode.
+        vehicleCount_range (tuple): Range for the number of vehicles.
+        vehicles_density_range (tuple): Range for vehicle density.
+        duration_range (tuple): Range for simulation duration in seconds.
+
+    Returns:
+        None
     """
-    observations, actions = [], []
-    base_config = env.config.copy()
+    observations = []
+    actions = []
 
-    for episode in trange(episodes, desc= "dataset completion"):
-        for _ in range(samples_per_episode):
-            randomize_env_config(env, base_config, vehicleCount_range, vehicles_density_range, duration_range)
+    base_config = env.config.copy()  # Preserve the base configuration
+
+    for episode in trange(episodes, desc="Dataset Generation"):
+        for sample in range(samples_per_episode):
+            # Randomize environment configuration for diversity
+            randomize_env_config(env, base_config,
+                                 vehicleCount_range,
+                                 vehicles_density_range,
+                                 duration_range)
+
+            # Reset the environment with the new configuration
             obs = env.reset()
+            done, truncated = False, False
 
+            # Capture the initial observation
             if isinstance(obs, tuple):
-                obs, info = obs
+                obs, info = obs  # If reset returns (obs, info)
             else:
                 info = {}
 
+            # Generate prompts for Claude.ai
             prompt1, assist1, prompt2 = env.prompt_design(obs)
-            llm_act = claude_action(prompt1, assist1, prompt2)
+            llm_act = groq_action(prompt1, assist1, prompt2)
+
+            # Convert LLM action to a numerical label
             action_label = map_llm_action_to_label(llm_act)
 
+            # Store observation and corresponding LLM action
             observations.append(obs.flatten())
             actions.append(action_label)
 
-    save_and_go(observations, actions, file_name)
+            # Optionally, you can advance the environment by one step with a dummy action
+            # to simulate state transitions, but since the goal is to capture diverse
+            # configurations without relying on previous actions, it's not necessary.
+    save_and_go(observations, actions, "test_rn_groq")
+            
 
 
 class MyHighwayEnvLLM(gym.Env):
@@ -278,7 +280,7 @@ if __name__ == "__main__":
     print(f"Action space: {env.action_space}")
 
     # Generate the dataset
-    generate_dataset_with_claude(
+    generate_dataset_with_groq(
         env=env,
         file_name='highway_dataset_claude.csv',
         episodes=500,
