@@ -74,8 +74,8 @@ def save_and_go(observations, actions, file_name):
     """
     Saves the generated dataset to a CSV file.
     """
-    observations = np.array(observations)
-    actions = np.array(actions)
+    # observations = np.array(observations)
+    # actions = np.array(actions)
 
     data = pd.DataFrame(observations)
     data['action'] = actions
@@ -90,7 +90,7 @@ def save_and_go(observations, actions, file_name):
     print(f"Dataset saved to {dataset_path}")
 
 
-def generate_dataset_with_groq(env, file_name, episodes=500, samples_per_episode=10,
+def generate_dataset_with_groq(env, file_name, episodes, samples_per_episode,
                                  vehicleCount_range=(3, 10),
                                  vehicles_density_range=(1, 5),
                                  duration_range=(30, 60)):
@@ -140,6 +140,7 @@ def generate_dataset_with_groq(env, file_name, episodes=500, samples_per_episode
 
             # Convert LLM action to a numerical label
             action_label = map_llm_action_to_label(llm_act)
+            print(action_label)
 
             # Store observation and corresponding LLM action
             observations.append(obs.flatten())
@@ -148,7 +149,7 @@ def generate_dataset_with_groq(env, file_name, episodes=500, samples_per_episode
             # Optionally, you can advance the environment by one step with a dummy action
             # to simulate state transitions, but since the goal is to capture diverse
             # configurations without relying on previous actions, it's not necessary.
-    save_and_go(observations, actions, "test_rn_groq")
+        save_and_go(observations, actions, file_name)
             
 
 
@@ -282,9 +283,9 @@ if __name__ == "__main__":
     # Generate the dataset
     generate_dataset_with_groq(
         env=env,
-        file_name='highway_dataset_claude.csv',
-        episodes=500,
-        samples_per_episode=10,
+        file_name='highway_dataset_groq.csv',
+        episodes=5,
+        samples_per_episode=1,
         vehicleCount_range=(3, 10),
         vehicles_density_range=(1, 5),
         duration_range=(30, 60)
