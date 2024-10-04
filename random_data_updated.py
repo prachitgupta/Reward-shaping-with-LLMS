@@ -55,8 +55,8 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
         response_json = model_response["content"][0]["text"]
         print('res - ',response_json)
         #action_text = response_json.get('completion', '').strip()
-        if 'Final decision:' in action_text:
-            action = action_text.split('Final decision:')[-1].strip().upper()
+        if 'Final decision:' in response_json:
+            action = response_json.split('Final decision:')[-1].strip().upper()
             return action
         else:
             print(f"Unexpected response format: {action_text}")
