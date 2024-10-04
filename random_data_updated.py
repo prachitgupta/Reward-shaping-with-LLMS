@@ -53,7 +53,6 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
         response = client.invoke_model(modelId=model_id, body=request)
         model_response = json.loads(response["body"].read())
         response_json = model_response["content"][0]["text"]
-        print('res - ',response_json)
         #action_text = response_json.get('completion', '').strip()
         if 'Final decision:' in response_json:
             action = response_json.split('Final decision:')[-1].strip().upper()
