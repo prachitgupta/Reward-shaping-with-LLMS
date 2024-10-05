@@ -2,10 +2,10 @@ import pandas as pd
 import os
 
 # Load the dataset
-file_path = os.path.join("datasets", 'highway_dataset_claude.csv')
+file_path = os.path.join("datasets", 'test_dataset_groq.csv')
 data = pd.read_csv(file_path)
 # Display the number of null or empty spaces in the last column
-last_column = data.columns[49]
+last_column = data.columns[-1]
 null_count = data[last_column].isnull().sum()
 empty_string_count = (data[last_column] == '').sum()
 empty_space_count = (data[last_column].astype(str).str.strip() == '').sum()
