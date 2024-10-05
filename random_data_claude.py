@@ -273,7 +273,7 @@ class MyHighwayEnvLLM(gym.Env):
     
 
 if __name__ == "__main__":
-    env = MyHighwayEnvLLM(vehicleCount=20)
+    env = MyHighwayEnvLLM(vehicleCount=10)
 
     # Optionally, verify environment setup
     print(f"Observation space: {env.observation_space}")

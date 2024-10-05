@@ -126,7 +126,7 @@ class MyHighwayEnvLLM(gym.Env):
     """
     Custom Gym environment for highway driving with LLM prompts.
     """
-    def __init__(self, vehicleCount=5):
+    def __init__(self, vehicleCount):
         super(MyHighwayEnvLLM, self).__init__()
         self.vehicleCount = vehicleCount
         self.prev_action = 'FASTER'
