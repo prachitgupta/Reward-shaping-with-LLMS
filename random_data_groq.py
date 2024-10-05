@@ -182,7 +182,7 @@ class MyHighwayEnvLLM(gym.Env):
         }
         self.env = gym.make("highway-fast-v0",config= self.config)
         self.action_space = self.env.action_space
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(10, 5), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
 
     def find_smallest_positive(self, arr):
         smallest_positive = float('inf')
@@ -283,9 +283,9 @@ if __name__ == "__main__":
     # Generate the dataset
     generate_dataset_with_groq(
         env=env,
-        file_name='highway_dataset_groq.csv',
-        episodes=5,
-        samples_per_episode=1,
+        file_name='test_dataset_groq.csv',
+        episodes=50,
+        samples_per_episode=10,
         vehicleCount_range=(3, 10),
         vehicles_density_range=(1, 5),
         duration_range=(30, 60)

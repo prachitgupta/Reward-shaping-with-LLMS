@@ -26,7 +26,7 @@ Run the Dataset Generation Script:
 Run the dataset generation script with your desired configurations:
 
 ```bash
-python3 random_data_updated.py 
+python3 random_data_claude.py 
 ```
 Modify Hyperparameters:
 
