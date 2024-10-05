@@ -35,27 +35,6 @@ def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
     return action
 
 
-def randomize_env_config(env, base_config, vehicleCount_range=(3, 10), vehicles_density_range=(1, 5), spacing=(1, 3), duration_range=(30, 60)):
-    """
-    Randomizes the environment configuration for diversity.
-    """
-    vehicleCount = random.randint(*vehicleCount_range)
-    env.config['observation']['vehicles_count'] = vehicleCount
-
-    vehicles_density = random.uniform(*vehicles_density_range)
-    env.config['vehicles_density'] = vehicles_density
-
-    duration = random.randint(*duration_range)
-    env.config['duration'] = duration
-
-    spacing = random.randint(*spacing)
-    env.config["initial_spacing"] = spacing
-
-    env.reset()
-    #print(f"Configuration after reset: {env.config}")
-
-
-
 def map_llm_action_to_label(llm_act):
     """
     Maps the LLM-recommended action string to a numerical label.
@@ -74,8 +53,8 @@ def save_and_go(observations, actions, file_name):
     """
     Saves the generated dataset to a CSV file.
     """
-    # observations = np.array(observations)
-    # actions = np.array(actions)
+    observations = np.array(observations)
+    actions = np.array(actions)
 
     data = pd.DataFrame(observations)
     data['action'] = actions
@@ -90,65 +69,55 @@ def save_and_go(observations, actions, file_name):
     print(f"Dataset saved to {dataset_path}")
 
 
-def generate_dataset_with_groq(env, file_name, episodes, samples_per_episode,
-                                 vehicleCount_range=(3, 10),
-                                 vehicles_density_range=(1, 5),
-                                 duration_range=(30, 60)):
+def generate_dataset_with_groq(env, file_name, total_samples,
+                               vehicles_density_range=(1, 5), spacing_range=(1, 3), 
+                               lane_id_range=[0, 1, 2, 3], ego_spacing_range=(1, 3)):
     """
-    Generates a labeled dataset by randomizing environment configurations,
-    capturing observations, using Claude.ai for action recommendations,
-    labeling actions, and saving the dataset.
-
-    Parameters:
-        env (gym.Env): The Gym environment instance.
-        file_name (str): The name of the CSV file to save the dataset.
-        episodes (int): Number of episodes to run.
-        samples_per_episode (int): Number of samples (configurations) per episode.
-        vehicleCount_range (tuple): Range for the number of vehicles.
-        vehicles_density_range (tuple): Range for vehicle density.
-        duration_range (tuple): Range for simulation duration in seconds.
-
-    Returns:
-        None
+    Generates a labeled dataset by varying all four environment configurations,
+    capturing observations, using Groq for action recommendations, labeling actions, and saving the dataset.
     """
     observations = []
     actions = []
 
-    base_config = env.config.copy()  # Preserve the base configuration
+    # Generate samples by iterating through combinations of configurations
+    for sample in trange(total_samples, desc="Dataset Generation"):
+        # Randomly sample each configuration parameter from the provided ranges
+        vehicles_density = random.uniform(*vehicles_density_range)
+        initial_spacing = random.uniform(*spacing_range)
+        initial_lane_id = random.choice(lane_id_range)
+        ego_spacing = random.uniform(*ego_spacing_range)
 
-    for episode in trange(episodes, desc="Dataset Generation"):
-        for sample in range(samples_per_episode):
-            # Randomize environment configuration for diversity
-            randomize_env_config(env, base_config,
-                                 vehicleCount_range,
-                                 vehicles_density_range,
-                                 duration_range)
+        # Apply the configurations to the environment
+        env.config['vehicles_density'] = vehicles_density
+        env.config['initial_spacing'] = initial_spacing
+        env.config['initial_lane_id'] = initial_lane_id
+        env.config['ego_spacing'] = ego_spacing
 
-            # Reset the environment with the new configuration
-            obs = env.reset()
-            done, truncated = False, False
+        print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
+              f"Initial Lane ID={initial_lane_id}, Ego Spacing={ego_spacing}")
 
-            # Capture the initial observation
-            if isinstance(obs, tuple):
-                obs, info = obs  # If reset returns (obs, info)
-            else:
-                info = {}
+        # Reset the environment with the new configuration
+        obs = env.reset()
 
-            # Generate prompts for Claude.ai
-            prompt1, assist1, prompt2 = env.prompt_design(obs)
-            llm_act = groq_action(prompt1, assist1, prompt2)
+        # Capture the initial observation
+        if isinstance(obs, tuple):
+            obs, info = obs  # If reset returns (obs, info)
+        else:
+            info = {}
 
-            # Convert LLM action to a numerical label
-            action_label = map_llm_action_to_label(llm_act)
-            print(action_label)
+        # Generate prompts for Groq
+        prompt1, assist1, prompt2 = env.prompt_design(obs)
+        llm_act = groq_action(prompt1, assist1, prompt2)
 
-            # Store observation and corresponding LLM action
-            observations.append(obs.flatten())
-            actions.append(action_label)
+        # Convert LLM action to a numerical label
+        action_label = map_llm_action_to_label(llm_act)
+        print(f"Action label: {action_label}")
 
-            # Optionally, you can advance the environment by one step with a dummy action
-            # to simulate state transitions, but since the goal is to capture diverse
-            # configurations without relying on previous actions, it's not necessary.
+        # Store observation and corresponding LLM action
+        observations.append(obs.flatten())
+        actions.append(action_label)
+
+        # Save data after all samples are generated
         save_and_go(observations, actions, file_name)
             
 
@@ -180,7 +149,7 @@ class MyHighwayEnvLLM(gym.Env):
             "show_trajectories": True,
             "render_agent": True,
         }
-        self.env = gym.make("highway-fast-v0",config= self.config)
+        self.env = gym.make("highway-v0",config= self.config)
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
 
@@ -280,13 +249,13 @@ if __name__ == "__main__":
     print(f"Observation space: {env.observation_space}")
     print(f"Action space: {env.action_space}")
 
-    # Generate the dataset
+    # Generate the dataset with varied configuration parameters
     generate_dataset_with_groq(
         env=env,
-        file_name='test_dataset_groq.csv',
-        episodes=50,
-        samples_per_episode=10,
-        vehicleCount_range=(3, 10),
+        file_name='highway_dataset_groq.csv',
+        total_samples=100,  # Generate 100 samples with varied configurations
         vehicles_density_range=(1, 5),
-        duration_range=(30, 60)
+        spacing_range=(1, 3),
+        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+        ego_spacing_range=(1, 3)  # Define range for ego vehicle spacing
     )
