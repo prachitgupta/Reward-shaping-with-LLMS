@@ -69,15 +69,15 @@ def train_lgbm_model(X_train, X_test, y_train, y_test,save_path):
     joblib.dump(lgbm_model, save_path)
     print(f"Model saved to {save_path}")
 
-file_path = os.path.join("datasets", 'highway_phi3.csv')
+file_path = os.path.join("datasets", 'cleaned_claude.csv')
 # Read the dataset
 data = pd.read_csv(file_path)
 
 X_train, X_test, y_train, y_test = preprocess(data)
 
 # Train Random Forest Model
-save_path = 'models/xgb_phi3.pkl'
-train_xgb_model(X_train, X_test, y_train, y_test, save_path)
+save_path = 'models/lgbm_claude.pkl'
+train_lgbm_model(X_train, X_test, y_train, y_test, save_path)
 
 
 
