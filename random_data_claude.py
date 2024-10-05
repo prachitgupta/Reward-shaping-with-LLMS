@@ -156,7 +156,7 @@ class MyHighwayEnvLLM(gym.Env):
     """
     Custom Gym environment for highway driving with LLM prompts.
     """
-    def __init__(self, vehicleCount=5):
+    def __init__(self, vehicleCount):
         super(MyHighwayEnvLLM, self).__init__()
         self.vehicleCount = vehicleCount
         self.prev_action = 'FASTER'
@@ -273,7 +273,7 @@ class MyHighwayEnvLLM(gym.Env):
     
 
 if __name__ == "__main__":
-    env = MyHighwayEnvLLM(vehicleCount=5)
+    env = MyHighwayEnvLLM(vehicleCount=20)
 
     # Optionally, verify environment setup
     print(f"Observation space: {env.observation_space}")
@@ -283,7 +283,7 @@ if __name__ == "__main__":
     generate_dataset_with_claude(
         env=env,
         file_name='highway_dataset_claude.csv',
-        total_samples=100,  # Generate 100 samples with varied configurations
+        total_samples=10000,  # Generate 100 samples with varied configurations
         vehicles_density_range=(1, 5),
         spacing_range=(1, 3),
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
