@@ -253,7 +253,7 @@ if __name__ == "__main__":
     generate_dataset_with_groq(
         env=env,
         file_name='highway_dataset_groq.csv',
-        total_samples=10000,  # Generate 100 samples with varied configurations
+        total_samples=1000,  # Generate 100 samples with varied configurations
         vehicles_density_range=(1, 5),
         spacing_range=(1, 3),
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
