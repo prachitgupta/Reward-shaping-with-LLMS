@@ -130,6 +130,97 @@ class MyHighwayEnvLLM(gym.Env):
                 smallest_positive = value
                 index = i
         return smallest_positive, index
+    
+    def prompt_design_blog(self, obs_):
+
+        # Part 1: Initial prompt introducing the scenario
+        prompt1 = 'You are Phi3, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
+                    You, the \'ego\' car, are now driving on a highway. You have already driven for 0 seconds.\n\
+                    The decision made by the agent LAST time step was \'FASTER\' (accelerate the vehicle).'
+
+        # Part 2: Driving rules that must be followed
+        rules = "There are several rules you need to follow when you drive on a highway:\n\
+                1. Try to keep a safe distance from the car in front of you.\n\
+                2. DON’T change lanes frequently. If you want to change lanes, double-check the safety of vehicles in the target lane."
+        
+        prompt1 += rules
+
+        # Part 3: Attention points for decision making
+        att_points = "Here are your attention points:\n\
+                        1. You must output a decision when you finish this task. Your final output decision must be unique and not ambiguous. For example, you cannot say \"I can either keep lane or accelerate at the current time\".\n\
+                        2. You need to always remember your current lane ID, your available actions, and available lanes before you make any decision.\n\
+                        3. Once you have a decision, you should check the safety with all the vehicles affected by your decision.\n\
+                        4. If you verify a decision is unsafe, you should start a new one and verify its safety again from scratch."
+        
+        prompt1 += att_points
+
+        # Part 4: Request for additional scenario details
+        assist1 = 'Understood. Please provide the current scenario or conditions, such as traffic density, speed of surrounding vehicles, your current speed, and any other relevant information, so I can recommend the best action.'
+
+        # Part 5: Describing the current highway scenario
+        prompt2 = 'Here is the current scenario:\n\
+        There are four lanes on the highway: Lane-1 (leftmost), Lane-2, Lane-3, Lane-4 (rightmost).\n\n'
+
+        # Extract information from the observations
+        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
+
+        # Ego vehicle details
+        ego_x, ego_y = x[0], y[0]
+        ego_vx, ego_vy = vx[0], vy[0]
+
+        # Other vehicles' relative positions
+        veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
+        veh_vx, veh_vy = vx[1:], vy[1:]
+
+        # Determine lane information for ego and other vehicles
+        lanes = y // 4 + 1
+        ego_lane = lanes[0]
+        veh_lanes = lanes[1:]
+
+        # Left and right lane availability based on the ego vehicle's current lane
+        if ego_lane == 1:
+            ego_left_lane = 'Left lane: Not available\n'
+            ego_right_lane = 'Right lane: Lane-' + str(ego_lane + 1) + '\n'
+        elif ego_lane == 4:
+            ego_left_lane = 'Left lane: Lane-' + str(ego_lane - 1) + '\n'
+            ego_right_lane = 'Right lane: Not available\n'
+        else:
+            ego_left_lane = 'Left lane: Lane-' + str(ego_lane - 1) + '\n'
+            ego_right_lane = 'Right lane: Lane-' + str(ego_lane + 1) + '\n'
+
+        # Append ego vehicle information to prompt2
+        prompt2 += 'Ego vehicle:\n\
+        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_vx) + ' m/s\n\n'
+
+        # Lane information including vehicles ahead in each lane
+        lane_info = 'Lane info:\n'
+        for i in range(4):
+            inds = np.where(veh_lanes == i + 1)[0]
+            num_v = len(inds)
+            if num_v > 0:
+                # Find the closest vehicle in the current lane
+                val, ind = self.find_smallest_positive(veh_x[inds])
+                true_ind = inds[ind]
+                lane_info += '\tLane-' + str(i + 1) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_x[true_ind]) + ' m ahead traveling at ' + str(veh_vx[true_ind]) + ' m/s.\n'
+            else:
+                lane_info += '\tLane-' + str(i + 1) + ': No other vehicle ahead of ego vehicle.\n'
+        
+        # Append lane information to prompt2
+        prompt2 += lane_info
+
+        # Part 6: Adding additional attention points and the final decision instruction
+        att_info = '\nAttention points:\n\
+        \t1. SLOWER has the least priority and should be used only when no other action is safe.\n\
+        \t2. DO NOT change lanes frequently.\n\
+        \t3. Safety is a priority, but do not forget efficiency.\n\
+        \t4. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
+        Your last action was ' + self.prev_action + '.Please recommend action for the current scenario only in this format and DONT propound anything else other than \'Final decision: <final decision>\'.\n'
+
+        # Append the attention information to prompt2
+        prompt2 += att_info
+
+        # Return the three prompts
+        return prompt1, assist1, prompt2
 
     def prompt_design(self, obs_):
         prompt1 = (
@@ -237,7 +328,7 @@ def show_videos(path="videos"):
 ##claude action
 def claude_query(env,obs):
     # Generate prompt for LLM
-    prompt1, assist1, prompt2 = env.prompt_design(obs)
+    prompt1, assist1, prompt2 = env.prompt_design_blog(obs)
     ##ask for claude response
     llm_act = claude_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
     ##int action
