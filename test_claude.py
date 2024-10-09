@@ -17,7 +17,7 @@ from tqdm import trange
 gym.register_envs(highway_env)
 
 from gymnasium.wrappers import RecordVideo
-from stable_baselines3.common.vec_env import DummyVecEnv
+
 
 ##for videos
 import base64
