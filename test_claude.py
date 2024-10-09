@@ -24,8 +24,7 @@ import base64
 from pathlib import Path
 
 from gymnasium.wrappers import RecordVideo
-from IPython import display as ipythondisplay
-from pyvirtualdisplay import Display
+
 
 ###setup claude
 # Define Boto3 client for Bedrock
