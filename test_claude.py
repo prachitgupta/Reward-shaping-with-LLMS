@@ -50,7 +50,7 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
     native_request = {
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 1024,
-        "temperature": 0,
+        "temperature": 0.1,
         "messages": [
             {
                 "role": "user",
@@ -213,9 +213,9 @@ class MyHighwayEnvLLM(gym.Env):
 
         # Part 6: Adding additional attention points and the final decision instruction
         safety_verification = '\nAttention points:\n\
-        \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
+        \t1.Safety is the main priority, You can maintain the same speed or even Go slower but in no circumstance you should collide with lead vehicle.\n\
         \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe.\n\
-        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling.\n\
+        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling which means maintaining the same speed.\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t5. Your action must be one of the five listed actions: IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
         Your last action was ' + self.prev_action + '. Please recommend an action for the current scenario, only in this format: \'Final decision: <final decision>\'.\n'
