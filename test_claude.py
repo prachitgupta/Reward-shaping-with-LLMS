@@ -336,7 +336,7 @@ def claude_query(env,obs):
     action = map_llm_action_to_label(llm_act)
     return action
 
-if _name_ == ("_main_"):
+if __name__ == ("_main_"):
     
 
     ##make env
