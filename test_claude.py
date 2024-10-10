@@ -132,7 +132,7 @@ class MyHighwayEnvLLM(gym.Env):
         return smallest_positive, index
     
     
-    def prompt_design_blog(self, obs_):
+    def prompt_design_safe(self, obs_):
 
         # Part 1: Initial prompt introducing the scenario
         prompt1 = 'You are claude, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
