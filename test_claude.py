@@ -95,8 +95,8 @@ class MyHighwayEnvLLM(gym.Env):
     """
     Custom Gym environment for highway driving with LLM prompts.
     """
-    def __init__(self, vehicleCount):
-        super(MyHighwayEnvLLM, self).__init__()
+    def _init_(self, vehicleCount):
+        super(MyHighwayEnvLLM, self)._init_()
         self.vehicleCount = vehicleCount
         self.prev_action = 'FASTER'
 
@@ -134,7 +134,7 @@ class MyHighwayEnvLLM(gym.Env):
     def prompt_design_blog(self, obs_):
 
         # Part 1: Initial prompt introducing the scenario
-        prompt1 = 'You are Phi3, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
+        prompt1 = 'You are claude, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
                     You, the \'ego\' car, are now driving on a highway. You have already driven for 0 seconds.\n\
                     The decision made by the agent LAST time step was \'FASTER\' (accelerate the vehicle).'
 
@@ -209,15 +209,16 @@ class MyHighwayEnvLLM(gym.Env):
         prompt2 += lane_info
 
         # Part 6: Adding additional attention points and the final decision instruction
-        att_info = '\nAttention points:\n\
-        \t1. SLOWER has the least priority and should be used only when no other action is safe.\n\
-        \t2. DO NOT change lanes frequently.\n\
+        safety_verification = '\nAttention points:\n\
+        \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
+        \t2.You are not supposed to change lane frequentll only when its neccessary to keep the vehicle safe.\n\
         \t3. Safety is a priority, but do not forget efficiency.\n\
-        \t4. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
+        \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
+        \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
         Your last action was ' + self.prev_action + '.Please recommend action for the current scenario only in this format and DONT propound anything else other than \'Final decision: <final decision>\'.\n'
 
         # Append the attention information to prompt2
-        prompt2 += att_info
+        prompt2 += safety_verification
 
         # Return the three prompts
         return prompt1, assist1, prompt2
@@ -335,7 +336,7 @@ def claude_query(env,obs):
     action = map_llm_action_to_label(llm_act)
     return action
 
-if __name__ == ("__main__"):
+if _name_ == ("_main_"):
     
 
     ##make env
@@ -371,4 +372,4 @@ if __name__ == ("__main__"):
                 f.write(f"{pred_action}\n")  # Write each action to the file
 
     env.close()
-    show_videos()
+    #show_videos()
