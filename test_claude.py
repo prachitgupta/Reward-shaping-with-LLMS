@@ -132,7 +132,7 @@ class MyHighwayEnvLLM(gym.Env):
         return smallest_positive, index
     
     
-    def prompt_design_safe(self, obs_):
+    def prompt_design_blog(self, obs_):
 
         # Part 1: Initial prompt introducing the scenario
         prompt1 = 'You are claude, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
@@ -141,18 +141,20 @@ class MyHighwayEnvLLM(gym.Env):
 
         # Part 2: Driving rules that must be followed
         rules = "There are several rules you need to follow when you drive on a highway:\n\
-                1. Try to keep a safe distance from the car in front of you.\n\
-                2. DON’T change lanes frequently. If you want to change lanes, double-check the safety of vehicles in the target lane."
-        
+                1. Keep a safe distance from the car in front of you.\n\
+                2. Avoid frequent lane changes. If you must change lanes, double-check the safety of vehicles in the target lane.\n\
+                3. Aim for a balance between safety and efficiency – avoid unnecessary idling or slowing down unless truly needed for safety."
+
         prompt1 += rules
 
         # Part 3: Attention points for decision making
         att_points = "Here are your attention points:\n\
                         1. You must output a decision when you finish this task. Your final output decision must be unique and not ambiguous. For example, you cannot say \"I can either keep lane or accelerate at the current time\".\n\
-                        2. You need to always remember your current lane ID, your available actions, and available lanes before you make any decision.\n\
-                        3. Once you have a decision, you should check the safety with all the vehicles affected by your decision.\n\
-                        4. If you verify a decision is unsafe, you should start a new one and verify its safety again from scratch."
-        
+                        2. Remember your current lane ID, available actions, and lanes before making a decision.\n\
+                        3. After making a decision, check its safety with respect to all surrounding vehicles.\n\
+                        4. If a decision is unsafe, discard it and re-evaluate safety before making a new decision.\n\
+                        5. Efficiency should be considered alongside safety—try to maintain a reasonable speed, avoiding unnecessary idling."
+
         prompt1 += att_points
 
         # Part 4: Request for additional scenario details
@@ -211,12 +213,12 @@ class MyHighwayEnvLLM(gym.Env):
 
         # Part 6: Adding additional attention points and the final decision instruction
         safety_verification = '\nAttention points:\n\
-        \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
-        \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe.\n\
-        \t3. Safety is a priority, but do not forget efficiency.\n\
+        \t1. Safety is the main priority, but efficiency is also important. You may go slower or idle if necessary, but avoid being overly cautious at the cost of efficient driving.\n\
+        \t2. Minimize lane changes, only switching lanes when necessary for safety and to maintain speed.\n\
+        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling.\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
-        \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
-        Your last action was ' + self.prev_action + '.Please recommend action for the current scenario only in this format and DONT propound anything else other than \'Final decision: <final decision>\'.\n'
+        \t5. Your action must be one of the five listed actions: IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
+        Your last action was ' + self.prev_action + '. Please recommend an action for the current scenario, only in this format: \'Final decision: <final decision>\'.\n'
 
         # Append the attention information to prompt2
         prompt2 += safety_verification
@@ -331,7 +333,7 @@ def show_videos(path="videos"):
 ##claude action
 def claude_query(env,obs):
     # Generate prompt for LLM
-    prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
+    prompt1, assist1, prompt2 = env.prompt_design_blog(obs)
     ##ask for claude response
     llm_act = claude_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
     ##int action
