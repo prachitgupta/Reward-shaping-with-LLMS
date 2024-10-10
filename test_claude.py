@@ -324,7 +324,7 @@ def show_videos(path="videos"):
                 mp4, video_b64.decode("ascii")
             )
         )
-    ipythondisplay.display(ipythondisplay.HTML(data="<br>".join(html)))
+    #ipythondisplay.display(ipythondisplay.HTML(data="<br>".join(html)))
     
 ##claude action
 def claude_query(env,obs):
@@ -372,4 +372,4 @@ if __name__ == ("_main_"):
                 f.write(f"{pred_action}\n")  # Write each action to the file
 
     env.close()
-    #show_videos()
+    show_videos()
