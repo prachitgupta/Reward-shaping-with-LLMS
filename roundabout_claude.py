@@ -178,7 +178,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
         ego_heading = self.env.unwrapped.vehicle.heading
         # Step 2: Get the current lane object using its start and end node names
-        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)
+        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
         ego_x, ego_y = ego_position
         ego_vx, ego_vy = vx[0] , vy[0]
         # Other vehicles' relative positions
