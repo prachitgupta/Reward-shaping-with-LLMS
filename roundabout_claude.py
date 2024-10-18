@@ -91,13 +91,12 @@ def map_llm_action_to_label(llm_act):
     return action_map.get(llm_act.upper(), 1)  # Default to IDLE if unrecognized
 
 ##setup env
-class MyHighwayEnvLLM(gym.Env):
+class MyRoundaboutEnvLLM(gym.Env):
     """
     Custom Gym environment for highway driving with LLM prompts.
     """
     def __init__(self):
         super(MyRoundaboutEnvLLM, self).__init__()
-        self.vehicleCount = vehicleCount
         self.prev_action = 'FASTER'
 
         self.config = {
@@ -120,7 +119,6 @@ class MyHighwayEnvLLM(gym.Env):
         }
         self.env = gym.make("roundabout-v0",render_mode='rgb_array', config= self.config)
         self.action_space = self.env.action_space
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
 
     def find_smallest_positive(self, arr):
         smallest_positive = float('inf')
@@ -147,7 +145,7 @@ class MyHighwayEnvLLM(gym.Env):
         # Part 2: Driving rules that must be followed
         rules = "There are several rules you need to follow when you drive on a highway:\n\
                 1. Try to keep a safe distance from the car in front of you.\n\
-                2. DON’T change your lane frequently. If you want to change lanes, double-check the safety of vehicles in the target lane.\ n \
+                2. DON’T change your lane frequently. If you want to change lanes, double-check the safety of vehicles in the target lane.\n \
                 3. On encountering the roundabout, you must complete half a circle and then continue moving forward."
         
         prompt1 += env_description + rules
