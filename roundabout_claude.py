@@ -135,6 +135,37 @@ class MyRoundaboutEnvLLM(gym.Env):
                 smallest_positive = value
                 index = i
         return smallest_positive, index
+    
+    def know_env(self, obs_):
+        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
+
+        # Step 1: Get ego vehicle's current position (x, y coordinates)
+        ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
+        ego_heading = self.env.unwrapped.vehicle.heading
+        # Step 2: Get the current lane object using its start and end node names
+        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
+        ego_x, ego_y = ego_position
+        ego_vx, ego_vy = vx[0] , vy[0]
+        
+        # Other vehicles' relative positions
+        # Exclude the ego vehicle and get only other vehicles
+        all_vehicles = self.env.unwrapped.road.vehicles
+        other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
+
+        # Access position and heading of non-ego vehicles
+        veh_lanes = []
+        for vehicle in other_vehicles:
+            vehicle_position = vehicle.position
+            vehicle_heading = vehicle.heading
+            veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
+            veh_lanes.append(veh_lane)
+        
+        veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
+        veh_vx, veh_vy = vx[1:], vy[1:]
+        veh_lanes = np.array(veh_lanes)
+        inds = np.where(veh_lanes == ego_lane)[0]
+        num_v = len(inds)
+        print(num_v)
   
     
     def prompt_design_safe(self, obs_):
@@ -194,10 +225,11 @@ class MyRoundaboutEnvLLM(gym.Env):
             vehicle_heading = vehicle.heading
             veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
             veh_lanes.append(veh_lane)
+        
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
         veh_lanes = np.array(veh_lanes)
-
+        
         # lane availability based on the ego vehicle's current lane
         if ego_lane == 1:
             ego_left_lane = 'Left lane: Not available\n'
@@ -297,7 +329,7 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = claude_query(env_llm, obs)# Predict action using the random forest model
+            action = 0  #  claude_query(env_llm, obs) Predict action using the random forest model
             
             episode_predictions.append(action)  # Save the predicted action
 
