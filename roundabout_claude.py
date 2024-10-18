@@ -106,7 +106,13 @@ class MyRoundaboutEnvLLM(gym.Env):
                 "absolute": True,
                 "normalize": False,
                 "see_behind": True,
-                "duration": 11
+                "duration": 11,
+                "features_range": {
+                        "x": [-100, 100],
+                        "y": [-100, 100],
+                        "vx": [-15, 15],
+                        "vy": [-15, 15],
+                    },
             },
             "action": {
                 "type": "DiscreteMetaAction",
@@ -117,6 +123,7 @@ class MyRoundaboutEnvLLM(gym.Env):
             "show_trajectories": True,
             "render_agent": True,
         }
+        #
         self.env = gym.make("roundabout-v0",render_mode='rgb_array', config= self.config)
         self.action_space = self.env.action_space
 
@@ -128,8 +135,7 @@ class MyRoundaboutEnvLLM(gym.Env):
                 smallest_positive = value
                 index = i
         return smallest_positive, index
-    
-    
+  
     
     def prompt_design_safe(self, obs_):
 
@@ -164,30 +170,28 @@ class MyRoundaboutEnvLLM(gym.Env):
 
         # Part 5: Describing the current highway scenario
         prompt2 = 'Here is the current scenario:\n\
-        There are 2 lanes on the highway: Lane-1, Lane-2.\n\n'
-
-        # Extract information from the observations
+        There are 2 lanes on the roundabout: Lane-1, Lane-2.\n\n'
+        
         x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
 
-        # Ego vehicle details
-        ego_x, ego_y = x[0], y[0]
-        ego_vx, ego_vy = vx[0], vy[0]
-
+        # Step 1: Get ego vehicle's current position (x, y coordinates)
+        ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
+        ego_heading = self.env.unwrapped.vehicle.heading
+        # Step 2: Get the current lane object using its start and end node names
+        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)
+        ego_x, ego_y = ego_position
+        ego_vx, ego_vy = vx[0] , vy[0]
         # Other vehicles' relative positions
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
 
-        # Determine lane information for ego and other vehicles
-        lanes = y // 4 + 1
-        ego_lane = lanes[0]
-        veh_lanes = lanes[1:]
 
         # lane availability based on the ego vehicle's current lane
         if ego_lane == 1:
             ego_left_lane = 'Left lane: Not available\n'
-            ego_right_lane = 'Right lane: Lane-' + str(ego_lane + 1) + '\n'
+            ego_right_lane = 'Right lane: Lane-' + str(current_lane - 1) + '\n'
         else:
-            ego_left_lane = 'Left lane: Lane-' + str(ego_lane - 1) + '\n'
+            ego_left_lane = 'Left lane: Lane-' + str(current_lane + 1) + '\n'
             ego_right_lane = 'Right lane: Not available\n'
 
         # Append ego vehicle information to prompt2
@@ -197,15 +201,15 @@ class MyRoundaboutEnvLLM(gym.Env):
         # Lane information including vehicles ahead in each lane
         lane_info = 'Lane info:\n'
         for i in range(2):
-            inds = np.where(veh_lanes == i + 1)[0]
+            inds = np.where(veh_lanes == i)[0]
             num_v = len(inds)
             if num_v > 0:
                 # Find the closest vehicle in the current lane
                 val, ind = self.find_smallest_positive(veh_x[inds])
                 true_ind = inds[ind]
-                lane_info += '\tLane-' + str(i + 1) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_x[true_ind]) + ' m ahead traveling at ' + str(veh_vx[true_ind]) + ' m/s.\n'
+                lane_info += '\tLane-' + str(i) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_x[true_ind]) + ' m ahead traveling at ' + str(veh_vx[true_ind]) + ' m/s.\n'
             else:
-                lane_info += '\tLane-' + str(i + 1) + ': No other vehicle ahead of ego vehicle.\n'
+                lane_info += '\tLane-' + str(i) + ': No other vehicle ahead of ego vehicle.\n'
         
         # Append lane information to prompt2
         prompt2 += lane_info
@@ -276,16 +280,18 @@ if __name__ == ("__main__"):
     ##wrap video
     env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    for episode in trange(1, desc='Test episodes'):
+    for episode in trange(2, desc='Test episodes'):
         (obs, info), done, truncated = env.reset(), False, False
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = claude_query(env_llm, obs)  # Predict action using the random forest model
+            action = claude_query(env_llm, obs)# Predict action using the random forest model
+            
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
             obs, reward, done, truncated, info = env.step(int(action))
+            env_llm.know_env(obs)
 
         # Save predictions for this episode to a file
         predictions_dir = "predictions"  # Define the directory path
