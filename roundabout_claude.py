@@ -330,13 +330,13 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = claude_query(env_llm, obs) Predict action using the random forest model
+            action = claude_query(env_llm, obs) #Predict action using the random forest model
             
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
             obs, reward, done, truncated, info = env.step(int(action))
-            env_llm.know_env(obs)
+            #env_llm.know_env(obs)
 
         # Save predictions for this episode to a file
         predictions_dir = "predictions"  # Define the directory path
