@@ -219,6 +219,7 @@ class MyHighwayEnvLLM(gym.Env):
         \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling which means maintaining the same speed.\n \
         \t5. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t6. Your action must be one of the five listed actions: IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
+        \t7. If your decesion is causing the vehicle to slow down excessively even if its completely safe to go fast, feel free to go with faster action, this is just to prevent excessive idling or deaccleration (you may check previous actiions to see if this is the case), in no circumstance this should compromise on safety \n \
         Your last action was ' + self.prev_action + '. Please recommend an action for the current scenario, only in this format: \'Final decision: <final decision>\'.\n'
 
         # Append the attention information to prompt2
@@ -426,7 +427,7 @@ def show_videos(path="videos"):
 ##claude action
 def claude_query(env,obs):
     # Generate prompt for LLM
-    prompt1, assist1, prompt2 = env.prompt_design_safe_efficient(obs)
+    prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
     ##ask for claude response
     llm_act = claude_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
     ##int action
@@ -442,7 +443,7 @@ if __name__ == ("__main__"):
 
     ##video folder path
     video_folder = "videos"
-    model_name = "test_claude/safe_efficient"
+    model_name = "test_claude/safe_test"
     video_path = f"{video_folder}/{model_name}"
 
     ##wrap video
@@ -463,7 +464,7 @@ if __name__ == ("__main__"):
         predictions_dir = "predictions"  # Define the directory path
         if not os.path.exists(predictions_dir):
             os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testing_claude_safe_efficient{episode + 1}_predictions.txt")
+        prediction_file = os.path.join(predictions_dir, f"testing_claude_safe{episode + 1}_predictions.txt")
         with open(prediction_file, 'w') as f:
             for pred_action in episode_predictions:
                 f.write(f"{pred_action}\n")  # Write each action to the file
