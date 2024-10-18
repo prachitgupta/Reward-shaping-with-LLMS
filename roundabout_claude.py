@@ -154,6 +154,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
 
         # Access position and heading of non-ego vehicles
+        ##only in roundabout 
         veh_lanes = []
         for vehicle in other_vehicles:
             vehicle_position = vehicle.position
@@ -241,7 +242,7 @@ class MyRoundaboutEnvLLM(gym.Env):
 
         # Append ego vehicle information to prompt2
         prompt2 += 'Ego vehicle:\n\
-        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_vx) + ' m/s\n\n'
+        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_v) + ' m/s\n\n'
 
         # Lane information including vehicles ahead in each lane
         lane_info = 'Lane info:\n'
@@ -250,9 +251,9 @@ class MyRoundaboutEnvLLM(gym.Env):
             num_v = len(inds)
             if num_v > 0:
                 # Find the closest vehicle in the current lane
-                val, ind = self.find_smallest_positive(veh_x[inds])
+                val, ind = self.find_smallest_positive(veh_y[inds])
                 true_ind = inds[ind]
-                lane_info += '\tLane-' + str(i) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_x[true_ind]) + ' m ahead traveling at ' + str(veh_vx[true_ind]) + ' m/s.\n'
+                lane_info += '\tLane-' + str(i) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_y[true_ind]) + ' m ahead traveling at ' + str(veh_vy[true_ind]) + ' m/s.\n'
             else:
                 lane_info += '\tLane-' + str(i) + ': No other vehicle ahead of ego vehicle.\n'
         
@@ -330,13 +331,14 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
+            #action = 0
             action = claude_query(env_llm, obs) #Predict action using the random forest model
             
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
             obs, reward, done, truncated, info = env.step(int(action))
-            #env_llm.know_env(obs)
+            env_llm.know_env(obs)
 
         # Save predictions for this episode to a file
         predictions_dir = "predictions"  # Define the directory path
