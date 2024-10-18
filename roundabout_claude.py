@@ -167,7 +167,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         veh_lanes = np.array(veh_lanes)
         inds = np.where(veh_lanes == ego_lane)[0]
         num_v = len(inds)
-        print(num_v)
+        print(ego_vy)
   
     
     def prompt_design_safe(self, obs_):
@@ -253,7 +253,7 @@ class MyRoundaboutEnvLLM(gym.Env):
                 # Find the closest vehicle in the current lane
                 val, ind = self.find_smallest_positive(veh_y[inds])
                 true_ind = inds[ind]
-                lane_info += '\tLane-' + str(i) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_y[true_ind]) + ' m ahead traveling at ' + str(veh_vy[true_ind]) + ' m/s.\n'
+                lane_info += '\tLane-' + str(i) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(abs(veh_y[true_ind])) + ' m ahead traveling at ' + str(abs(veh_vy[true_ind])) + ' m/s.\n'
             else:
                 lane_info += '\tLane-' + str(i) + ': No other vehicle ahead of ego vehicle.\n'
         
@@ -264,7 +264,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         safety_verification = '\nAttention points:\n\
         \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
         \t2.before merging in roundabout i.e when you see vehicles in your lane you must avoid collision at all cost even if it requires to go slow\n\
-        \t3. Safety is a priority, but do not forget efficiency.\n\
+        \t3. Safety is a priority, but do not forget efficiency.so avoid decesions leading to excessive idling that is maintaining the same speed or deaccelerating even when situation is favourable\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
         Your last action was ' + self.prev_action + '.Please recommend action for the current scenario only in this format and DONT propound anything else other than \'Final decision: <final decision>\'.\n'
