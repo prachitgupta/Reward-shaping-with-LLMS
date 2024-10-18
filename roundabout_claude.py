@@ -146,6 +146,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
         ego_x, ego_y = ego_position
         ego_vx, ego_vy = vx[0] , vy[0]
+        print(f"ego lane : {ego_lane} \n")
         
         # Other vehicles' relative positions
         # Exclude the ego vehicle and get only other vehicles
@@ -159,7 +160,7 @@ class MyRoundaboutEnvLLM(gym.Env):
             vehicle_heading = vehicle.heading
             veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
             veh_lanes.append(veh_lane)
-        
+        print(f"veh_lanes = {veh_lanes} \n")
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
         veh_lanes = np.array(veh_lanes)
@@ -329,7 +330,7 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = 0  #  claude_query(env_llm, obs) Predict action using the random forest model
+            action = claude_query(env_llm, obs) Predict action using the random forest model
             
             episode_predictions.append(action)  # Save the predicted action
 
