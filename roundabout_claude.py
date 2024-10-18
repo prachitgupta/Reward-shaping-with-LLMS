@@ -242,7 +242,7 @@ class MyRoundaboutEnvLLM(gym.Env):
 
         # Append ego vehicle information to prompt2
         prompt2 += 'Ego vehicle:\n\
-        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_v) + ' m/s\n\n'
+        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_vy) + ' m/s\n\n'
 
         # Lane information including vehicles ahead in each lane
         lane_info = 'Lane info:\n'
