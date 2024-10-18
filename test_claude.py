@@ -426,7 +426,7 @@ def show_videos(path="videos"):
 ##claude action
 def claude_query(env,obs):
     # Generate prompt for LLM
-    prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
+    prompt1, assist1, prompt2 = env.prompt_design_safe_efficient(obs)
     ##ask for claude response
     llm_act = claude_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
     ##int action
