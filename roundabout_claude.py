@@ -184,6 +184,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         
         # Other vehicles' relative positions
         # Exclude the ego vehicle and get only other vehicles
+        all_vehicles = self.env.unwrapped.road.vehicles
         other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
 
         # Access position and heading of non-ego vehicles
