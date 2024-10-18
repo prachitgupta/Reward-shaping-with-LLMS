@@ -212,11 +212,11 @@ class MyHighwayEnvLLM(gym.Env):
         prompt2 += lane_info
 
         # Part 6: Adding additional attention points and the final decision instruction
+        #faster = \t4. If your decesion is causing the vehicle to slow down excessively even if its completely safe to go fast, feel free to go with faster action, this is just to prevent excessive idling or deaccleration (you may check previous actiions to see if this is the case), in no circumstance this should compromise on safety \n \
         safety_verification = '\nAttention points:\n\
         \t1.Safety is the main priority, You can maintain the same speed or even Go slower but in no circumstance you should collide with lead vehicle.\n\
         \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe.\n\
-        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling which means maintaining the same speed.\n\
-        \t4. If your decesion is causing the vehicle to slow down excessively even if its completely safe to go fast, feel free to go with faster action, this is just to prevent excessive idling or deaccleration (you may check previous actiions to see if this is the case), in no circumstance this should compromise on safety \n \
+        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling which means maintaining the same speed.\n \
         \t5. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t6. Your action must be one of the five listed actions: IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
         Your last action was ' + self.prev_action + '. Please recommend an action for the current scenario, only in this format: \'Final decision: <final decision>\'.\n'
@@ -442,7 +442,7 @@ if __name__ == ("__main__"):
 
     ##video folder path
     video_folder = "videos"
-    model_name = "test_claude/safe_efficient_fast"
+    model_name = "test_claude/safe_efficient"
     video_path = f"{video_folder}/{model_name}"
 
     ##wrap video
@@ -463,7 +463,7 @@ if __name__ == ("__main__"):
         predictions_dir = "predictions"  # Define the directory path
         if not os.path.exists(predictions_dir):
             os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testing_claude_safety{episode + 1}_predictions.txt")
+        prediction_file = os.path.join(predictions_dir, f"testing_claude_safe_efficient{episode + 1}_predictions.txt")
         with open(prediction_file, 'w') as f:
             for pred_action in episode_predictions:
                 f.write(f"{pred_action}\n")  # Write each action to the file
