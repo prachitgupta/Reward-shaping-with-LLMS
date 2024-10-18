@@ -325,7 +325,7 @@ if __name__ == ("__main__"):
     ##wrap video
     env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    for episode in trange(1, desc='Test episodes'):
+    for episode in trange(3, desc='Test episodes'):
         (obs, info), done, truncated = env.reset(), False, False
         episode_predictions = []  # Store predictions for the current episode
 
