@@ -196,6 +196,7 @@ class MyRoundaboutEnvLLM(gym.Env):
             veh_lanes.append(veh_lane)
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
+        veh_lanes = np.array(veh_lanes)
 
         # lane availability based on the ego vehicle's current lane
         if ego_lane == 1:
