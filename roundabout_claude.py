@@ -262,7 +262,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         # Part 6: Adding additional attention points and the final decision instruction
         safety_verification = '\nAttention points:\n\
         \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
-        \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe. Before changing lane check safety like safe distance and speed fro other vehicles\n\
+        \t2.before merging in roundabout i.e when you see vehicles in your lane you must avoid collision at all cost even if it requires to go slow\n\
         \t3. Safety is a priority, but do not forget efficiency.\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
