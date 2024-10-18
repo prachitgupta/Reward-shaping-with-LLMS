@@ -181,10 +181,20 @@ class MyRoundaboutEnvLLM(gym.Env):
         ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
         ego_x, ego_y = ego_position
         ego_vx, ego_vy = vx[0] , vy[0]
+        
         # Other vehicles' relative positions
+        # Exclude the ego vehicle and get only other vehicles
+        other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
+
+        # Access position and heading of non-ego vehicles
+        veh_lanes = []
+        for vehicle in other_vehicles:
+            vehicle_position = vehicle.position
+            vehicle_heading = vehicle.heading
+            veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
+            veh_lanes.append(veh_lane)
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
-
 
         # lane availability based on the ego vehicle's current lane
         if ego_lane == 1:
