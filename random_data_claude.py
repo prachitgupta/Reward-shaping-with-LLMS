@@ -470,7 +470,7 @@ if __name__ == "__main__":
         env=env,
         file_name='highway_dataset_claude_safe_efficient.csv',
         total_samples=10000,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(1, 5),
+        vehicles_density_range=(1, 3),
         spacing_range=(2, 20),
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
         ego_spacing_range=(1, 20)  # Define range for ego vehicle spacing
