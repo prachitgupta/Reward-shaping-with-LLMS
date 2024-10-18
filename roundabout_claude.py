@@ -189,9 +189,9 @@ class MyRoundaboutEnvLLM(gym.Env):
         # lane availability based on the ego vehicle's current lane
         if ego_lane == 1:
             ego_left_lane = 'Left lane: Not available\n'
-            ego_right_lane = 'Right lane: Lane-' + str(current_lane - 1) + '\n'
+            ego_right_lane = 'Right lane: Lane-' + str(ego_lane - 1) + '\n'
         else:
-            ego_left_lane = 'Left lane: Lane-' + str(current_lane + 1) + '\n'
+            ego_left_lane = 'Left lane: Lane-' + str(ego_lane + 1) + '\n'
             ego_right_lane = 'Right lane: Not available\n'
 
         # Append ego vehicle information to prompt2
@@ -280,7 +280,7 @@ if __name__ == ("__main__"):
     ##wrap video
     env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    for episode in trange(2, desc='Test episodes'):
+    for episode in trange(1, desc='Test episodes'):
         (obs, info), done, truncated = env.reset(), False, False
         episode_predictions = []  # Store predictions for the current episode
 
