@@ -473,7 +473,7 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = claude_query(env,obs)  # Predict action using the random forest model
+            action = claude_query(env_llm,obs)  # Predict action using the random forest model
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
