@@ -116,7 +116,7 @@ class MyHighwayEnvLLM(gym.Env):
                 "target_speeds": np.linspace(0, 32, 9),
             },
             "duration": 40,
-            "vehicles_density": 2.5,
+            "vehicles_density":0.5,
             "show_trajectories": True,
             "render_agent": True,
         }
@@ -449,44 +449,44 @@ if __name__ == ("__main__"):
     ##make env
     env_llm = MyHighwayEnvLLM(vehicleCount =10)
 
-     # Generate the dataset
-    generate_dataset_with_claude(
-        env= env_llm.env,
-        file_name='random_test.csv',
-        total_samples=100,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(1, 2.5),
-        spacing_range=(0, 20),
-        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
-    )
+    #  # Generate the dataset
+    # generate_dataset_with_claude(
+    #     env= env_llm.env,
+    #     file_name='random_test.csv',
+    #     total_samples=100,  # Generate 100 samples with varied configurations
+    #     vehicles_density_range=(1, 2.5),
+    #     spacing_range=(0, 20),
+    #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+    #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
+    # )
 
-    # ##video folder path
-    # video_folder = "videos"
-    # model_name = "testing"
-    # video_path = f"{video_folder}/{model_name}"
+    ##video folder path
+    video_folder = "videos"
+    model_name = "testing"
+    video_path = f"{video_folder}/{model_name}"
 
-    # ##wrap video
-    # env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
+    ##wrap video
+    env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    # for episode in trange(5, desc='Test episodes'):
-    #     (obs, info), done, truncated = env.reset(), False, False
-    #     episode_predictions = []  # Store predictions for the current episode
+    for episode in trange(1, desc='Test episodes'):
+        (obs, info), done, truncated = env.reset(), False, False
+        episode_predictions = []  # Store predictions for the current episode
 
-    #     while not (done or truncated):
-    #         action = 1  # Predict action using the random forest model
-    #         episode_predictions.append(action)  # Save the predicted action
+        while not (done or truncated):
+            action = claude_query(env,obs)  # Predict action using the random forest model
+            episode_predictions.append(action)  # Save the predicted action
 
-    #         # Step in the environment
-    #         obs, reward, done, truncated, info = env.step(int(action))
+            # Step in the environment
+            obs, reward, done, truncated, info = env.step(int(action))
 
-    #     # Save predictions for this episode to a file
-    #     predictions_dir = "predictions"  # Define the directory path
-    #     if not os.path.exists(predictions_dir):
-    #         os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-    #     prediction_file = os.path.join(predictions_dir, f"testing{episode + 1}_predictions.txt")
-    #     with open(prediction_file, 'w') as f:
-    #         for pred_action in episode_predictions:
-    #             f.write(f"{pred_action}\n")  # Write each action to the file
+        # Save predictions for this episode to a file
+        predictions_dir = "predictions"  # Define the directory path
+        if not os.path.exists(predictions_dir):
+            os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
+        prediction_file = os.path.join(predictions_dir, f"testing{episode + 1}_predictions.txt")
+        with open(prediction_file, 'w') as f:
+            for pred_action in episode_predictions:
+                f.write(f"{pred_action}\n")  # Write each action to the file
 
-    # env.close()
-    # show_videos()
+    env.close()
+    show_videos()
