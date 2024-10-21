@@ -119,10 +119,10 @@ def generate_dataset_with_claude(env, file_name, total_samples,
         ego_spacing = random.uniform(*ego_spacing_range)
 
         # Apply the configurations to the environment
-        env.unwrapped.config['vehicles_density'] = vehicles_density
-        env.unwrapped.config['initial_spacing'] = initial_spacing
-        env.unwrapped.config['initial_lane_id'] = initial_lane_id
-        env.unwrapped.config['ego_spacing'] = ego_spacing
+        env.config['vehicles_density'] = vehicles_density
+        env.config['initial_spacing'] = initial_spacing
+        env.config['initial_lane_id'] = initial_lane_id
+        env.config['ego_spacing'] = ego_spacing
 
         print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
               f"Initial Lane ID={initial_lane_id}, Ego Spacing={ego_spacing}")
@@ -315,7 +315,7 @@ if __name__ == "__main__":
 
      # Generate the dataset
     generate_dataset_with_claude(
-        env= env.env,
+        env= env,
         file_name='claude_5k.csv',
         total_samples=5000,  # Generate 100 samples with varied configurations
         vehicles_density_range=(1, 2.5),
