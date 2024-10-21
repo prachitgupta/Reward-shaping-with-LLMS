@@ -116,7 +116,7 @@ class MyHighwayEnvLLM(gym.Env):
                 "target_speeds": np.linspace(0, 32, 9),
             },
             "duration": 40,
-            "vehicles_density":0.5,
+            "vehicles_density":0.2,
             "show_trajectories": True,
             "render_agent": True,
         }
@@ -344,7 +344,7 @@ class MyHighwayEnvLLM(gym.Env):
         safety_verification = '\nAttention points:\n\
         \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
         \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe. Before changing lane check safety like safe distance and speed fro other vehicles\n\
-        \t3. Safety is a priority, but do not forget efficiency.\n\
+        \t3. Safety is a priority, but do not forget efficiency.SO You may Go faster if neccessary for eg very less vehicle density\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
         Your last action was ' + self.prev_action + '.Please recommend action for the current scenario only in this format and DONT propound anything else other than \'Final decision: <final decision>\'.\n'
@@ -473,7 +473,7 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = claude_query(env_llm,obs)  # Predict action using the random forest model
+            action = 1   # Predict action using the random forest model claude_query(env_llm,obs)
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
