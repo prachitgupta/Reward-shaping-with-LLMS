@@ -119,10 +119,10 @@ def generate_dataset_with_claude(env, file_name, total_samples,
         ego_spacing = random.uniform(*ego_spacing_range)
 
         # Apply the configurations to the environment
-        env.config['vehicles_density'] = vehicles_density
-        env.config['initial_spacing'] = initial_spacing
-        env.config['initial_lane_id'] = initial_lane_id
-        env.config['ego_spacing'] = ego_spacing
+        env.unwrapped.config['vehicles_density'] = vehicles_density
+        env.unwrapped.config['initial_spacing'] = initial_spacing
+        env.unwrapped.config['initial_lane_id'] = initial_lane_id
+        env.unwrapped.config['ego_spacing'] = ego_spacing
 
         print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
               f"Initial Lane ID={initial_lane_id}, Ego Spacing={ego_spacing}")
@@ -137,7 +137,7 @@ def generate_dataset_with_claude(env, file_name, total_samples,
             info = {}
 
         # Generate prompts for Groq
-        prompt1, assist1, prompt2 = env.prompt_design_safe_efficient(obs)
+        prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
         llm_act = claude_action(prompt1, assist1, prompt2)
 
         # Convert LLM action to a numerical label
