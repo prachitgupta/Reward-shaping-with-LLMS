@@ -36,6 +36,8 @@ CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
 CLAUDE_API_URL = 'https://api.anthropic.com/v1/complete'
 
 
+
+
 def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sample=50, temperature=0.7):
     """
     Sends prompts to Claude.ai and retrieves the recommended action.
@@ -114,14 +116,47 @@ class MyHighwayEnvLLM(gym.Env):
                 "target_speeds": np.linspace(0, 32, 9),
             },
             "duration": 40,
-            "vehicles_density": 2,
+            "vehicles_density": 2.5,
             "show_trajectories": True,
             "render_agent": True,
         }
         self.env = gym.make("highway-v0",render_mode='rgb_array', config= self.config)
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
+    
+    def know_env(self, obs_):
+        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
 
+        # Step 1: Get ego vehicle's current position (x, y coordinates)
+        ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
+        ego_heading = self.env.unwrapped.vehicle.heading
+        # Step 2: Get the current lane object using its start and end node names
+        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
+        ego_x, ego_y = ego_position
+        ego_vx, ego_vy = vx[0] , vy[0]
+        print(f"ego lane : {ego_lane} \n")
+        
+        # Other vehicles' relative positions
+        # Exclude the ego vehicle and get only other vehicles
+        all_vehicles = self.env.unwrapped.road.vehicles
+        other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
+
+        # Access position and heading of non-ego vehicles
+        ##only in roundabout 
+        veh_lanes = []
+        for vehicle in other_vehicles:
+            vehicle_position = vehicle.position
+            vehicle_heading = vehicle.heading
+            veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
+            veh_lanes.append(veh_lane)
+        print(f"veh_lanes = {veh_lanes} \n")
+        veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
+        veh_vx, veh_vy = vx[1:], vy[1:]
+        veh_lanes = np.array(veh_lanes)
+        inds = np.where(veh_lanes == ego_lane)[0]
+        num_v = len(inds)
+        print(ego_vy)
+        
     def find_smallest_positive(self, arr):
         smallest_positive = float('inf')
         index = -1
@@ -356,40 +391,102 @@ def claude_query(env,obs):
     action = map_llm_action_to_label(llm_act)
     return action
 
+def generate_dataset_with_claude(env, total_samples, file_name,
+                               vehicles_density_range, spacing_range, 
+                               lane_id_range=[0, 1, 2, 3], ego_spacing_range=(1, 3)):
+    """
+    Generates a labeled dataset by varying all four environment configurations,
+    capturing observations, using Groq for action recommendations, labeling actions, and saving the dataset.
+    """
+    observations = []
+
+    # Generate samples by iterating through combinations of configurations
+    for sample in trange(total_samples, desc="Dataset Generation"):
+        # Randomly sample each configuration parameter from the provided ranges
+        vehicles_density = random.uniform(*vehicles_density_range)
+        initial_spacing = random.uniform(*spacing_range)
+        initial_lane_id = random.choice(lane_id_range)
+        ego_spacing = random.uniform(*ego_spacing_range)
+
+        # Apply the configurations to the environment
+        env.config['vehicles_density'] = vehicles_density
+        env.config['initial_spacing'] = initial_spacing
+        env.config['initial_lane_id'] = initial_lane_id
+        env.config['ego_spacing'] = ego_spacing
+
+        print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
+              f"Initial Lane ID={initial_lane_id}, Ego Spacing={ego_spacing}")
+
+        # Reset the environment with the new configuration
+        obs = env.reset()
+
+        # Capture the initial observation
+        if isinstance(obs, tuple):
+            obs, info = obs  # If reset returns (obs, info)
+        else:
+            info = {}
+        
+        # Store observation and corresponding LLM action
+        observations.append(obs.flatten())
+        
+        #observations = np.array(observations)
+    
+        data = pd.DataFrame(observations)
+
+        dataset_dir = 'datasets'
+        if not os.path.exists(dataset_dir):
+            os.makedirs(dataset_dir)
+
+        dataset_path = os.path.join(dataset_dir, file_name)
+        data.to_csv(dataset_path, index=False)
+
+        print(f"Dataset saved to {dataset_path}")
+        
+
 if __name__ == ("__main__"):
     
 
     ##make env
     env_llm = MyHighwayEnvLLM(vehicleCount =10)
 
+     # Generate the dataset
+    generate_dataset_with_claude(
+        env= env_llm.env,
+        file_name='random_test.csv',
+        total_samples=100,  # Generate 100 samples with varied configurations
+        vehicles_density_range=(1, 2.5),
+        spacing_range=(0, 20),
+        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
+    )
 
-    ##video folder path
-    video_folder = "videos"
-    model_name = "test_claude/safe_test"
-    video_path = f"{video_folder}/{model_name}"
+    # ##video folder path
+    # video_folder = "videos"
+    # model_name = "testing"
+    # video_path = f"{video_folder}/{model_name}"
 
-    ##wrap video
-    env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
+    # ##wrap video
+    # env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    for episode in trange(5, desc='Test episodes'):
-        (obs, info), done, truncated = env.reset(), False, False
-        episode_predictions = []  # Store predictions for the current episode
+    # for episode in trange(5, desc='Test episodes'):
+    #     (obs, info), done, truncated = env.reset(), False, False
+    #     episode_predictions = []  # Store predictions for the current episode
 
-        while not (done or truncated):
-            action = claude_query(env_llm, obs)  # Predict action using the random forest model
-            episode_predictions.append(action)  # Save the predicted action
+    #     while not (done or truncated):
+    #         action = 1  # Predict action using the random forest model
+    #         episode_predictions.append(action)  # Save the predicted action
 
-            # Step in the environment
-            obs, reward, done, truncated, info = env.step(int(action))
+    #         # Step in the environment
+    #         obs, reward, done, truncated, info = env.step(int(action))
 
-        # Save predictions for this episode to a file
-        predictions_dir = "predictions"  # Define the directory path
-        if not os.path.exists(predictions_dir):
-            os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testing_claude_safe{episode + 1}_predictions.txt")
-        with open(prediction_file, 'w') as f:
-            for pred_action in episode_predictions:
-                f.write(f"{pred_action}\n")  # Write each action to the file
+    #     # Save predictions for this episode to a file
+    #     predictions_dir = "predictions"  # Define the directory path
+    #     if not os.path.exists(predictions_dir):
+    #         os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
+    #     prediction_file = os.path.join(predictions_dir, f"testing{episode + 1}_predictions.txt")
+    #     with open(prediction_file, 'w') as f:
+    #         for pred_action in episode_predictions:
+    #             f.write(f"{pred_action}\n")  # Write each action to the file
 
-    env.close()
-    show_videos()
+    # env.close()
+    # show_videos()

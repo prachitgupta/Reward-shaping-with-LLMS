@@ -101,8 +101,8 @@ def save_and_go(observations, actions, file_name):
 
 
 def generate_dataset_with_claude(env, file_name, total_samples,
-                               vehicles_density_range=(1, 5), spacing_range=(1, 3), 
-                               lane_id_range=[0, 1, 2, 3], ego_spacing_range=(1, 3)):
+                               vehicles_density_range, spacing_range, 
+                               lane_id_range, ego_spacing_range):
     """
     Generates a labeled dataset by varying all four environment configurations,
     capturing observations, using Groq for action recommendations, labeling actions, and saving the dataset.
@@ -192,100 +192,6 @@ class MyHighwayEnvLLM(gym.Env):
                 index = i
         return smallest_positive, index
     
-    def prompt_design_safe_efficient(self, obs_):
-
-        # Part 1: Initial prompt introducing the scenario
-        prompt1 = 'You are claude, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
-                    You, the \'ego\' car, are now driving on a highway. You have already driven for 0 seconds.\n\
-                    The decision made by the agent LAST time step was \'FASTER\' (accelerate the vehicle).'
-
-        # Part 2: Driving rules that must be followed
-        rules = "There are several rules you need to follow when you drive on a highway:\n\
-                1. Keep a safe distance from the car in front of you.\n\
-                2. Avoid frequent lane changes. If you must change lanes, double-check the safety of vehicles in the target lane.\n\
-                3. Aim for a balance between safety and efficiency – avoid unnecessary idling or slowing down unless truly needed for safety."
-
-        prompt1 += rules
-
-        # Part 3: Attention points for decision making
-        att_points = "Here are your attention points:\n\
-                        1. You must output a decision when you finish this task. Your final output decision must be unique and not ambiguous. For example, you cannot say \"I can either keep lane or accelerate at the current time\".\n\
-                        2. Remember your current lane ID, available actions, and lanes before making a decision.\n\
-                        3. After making a decision, check its safety with respect to all surrounding vehicles.\n\
-                        4. If a decision is unsafe, discard it and re-evaluate safety before making a new decision.\n\
-                        5. Efficiency should be considered alongside safety—try to maintain a reasonable speed, avoiding unnecessary idling."
-
-        prompt1 += att_points
-
-        # Part 4: Request for additional scenario details
-        assist1 = 'Understood. Please provide the current scenario or conditions, such as traffic density, speed of surrounding vehicles, your current speed, and any other relevant information, so I can recommend the best action.'
-
-        # Part 5: Describing the current highway scenario
-        prompt2 = 'Here is the current scenario:\n\
-        There are four lanes on the highway: Lane-1 (leftmost), Lane-2, Lane-3, Lane-4 (rightmost).\n\n'
-
-        # Extract information from the observations
-        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
-
-        # Ego vehicle details
-        ego_x, ego_y = x[0], y[0]
-        ego_vx, ego_vy = vx[0], vy[0]
-
-        # Other vehicles' relative positions
-        veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
-        veh_vx, veh_vy = vx[1:], vy[1:]
-
-        # Determine lane information for ego and other vehicles
-        lanes = y // 4 + 1
-        ego_lane = lanes[0]
-        veh_lanes = lanes[1:]
-
-        # Left and right lane availability based on the ego vehicle's current lane
-        if ego_lane == 1:
-            ego_left_lane = 'Left lane: Not available\n'
-            ego_right_lane = 'Right lane: Lane-' + str(ego_lane + 1) + '\n'
-        elif ego_lane == 4:
-            ego_left_lane = 'Left lane: Lane-' + str(ego_lane - 1) + '\n'
-            ego_right_lane = 'Right lane: Not available\n'
-        else:
-            ego_left_lane = 'Left lane: Lane-' + str(ego_lane - 1) + '\n'
-            ego_right_lane = 'Right lane: Lane-' + str(ego_lane + 1) + '\n'
-
-        # Append ego vehicle information to prompt2
-        prompt2 += 'Ego vehicle:\n\
-        \tCurrent lane: Lane-' + str(ego_lane) + '\n' + '\t' + ego_left_lane + '\t' + ego_right_lane + '\tCurrent speed: ' + str(ego_vx) + ' m/s\n\n'
-
-        # Lane information including vehicles ahead in each lane
-        lane_info = 'Lane info:\n'
-        for i in range(4):
-            inds = np.where(veh_lanes == i + 1)[0]
-            num_v = len(inds)
-            if num_v > 0:
-                # Find the closest vehicle in the current lane
-                val, ind = self.find_smallest_positive(veh_x[inds])
-                true_ind = inds[ind]
-                lane_info += '\tLane-' + str(i + 1) + ': There are ' + str(num_v) + ' vehicle(s) in this lane ahead of ego vehicle, closest being ' + str(veh_x[true_ind]) + ' m ahead traveling at ' + str(veh_vx[true_ind]) + ' m/s.\n'
-            else:
-                lane_info += '\tLane-' + str(i + 1) + ': No other vehicle ahead of ego vehicle.\n'
-        
-        # Append lane information to prompt2
-        prompt2 += lane_info
-
-        # Part 6: Adding additional attention points and the final decision instruction
-        safety_verification = '\nAttention points:\n\
-        \t1.Safety is the main priority, You can maintain the same speed or even Go slower but in no circumstance you should collide with lead vehicle.\n\
-        \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe.\n\
-        \t3. Ensure that your decision prioritizes both safety and efficiency; avoid decisions that lead to excessive idling which means maintaining the same speed.\n\
-        \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
-        \t5. Your action must be one of the five listed actions: IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
-        Your last action was ' + self.prev_action + '. Please recommend an action for the current scenario, only in this format: \'Final decision: <final decision>\'.\n'
-
-        # Append the attention information to prompt2
-        prompt2 += safety_verification
-
-        # Return the three prompts
-        return prompt1, assist1, prompt2
-    
     def prompt_design_safe(self, obs_):
 
         # Part 1: Initial prompt introducing the scenario
@@ -366,7 +272,7 @@ class MyHighwayEnvLLM(gym.Env):
         # Part 6: Adding additional attention points and the final decision instruction
         safety_verification = '\nAttention points:\n\
         \t1.Safety is the main priority, You can stay IDLE or even Go slower but in no circumstance you should collide with lead vehicle.\n\
-        \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe.\n\
+        \t2.You are not supposed to change lane frequently only when its neccessary to keep the vehicle safe. Before changing lane check safety like safe distance and speed fro other vehicles\n\
         \t3. Safety is a priority, but do not forget efficiency.\n\
         \t4. you should only make a decesion once you have verified safety with other vehicles otherwise make a new decesion and verify its safety from scratch\n \
         \t5. Your suggested action has to be one from the five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT.\n\
@@ -377,65 +283,7 @@ class MyHighwayEnvLLM(gym.Env):
 
         # Return the three prompts
         return prompt1, assist1, prompt2
-
-    def prompt_design(self, obs_):
-        prompt1 = (
-            "You are a smart driving assistant. You, the 'ego' car, are now driving on a highway. "
-            "You need to recommend ONLY ONE best action among the following set of actions based on the current scenario: "
-            "1. IDLE -- maintain the current speed in the current lane "
-            "2. FASTER -- accelerate the ego vehicle "
-            "3. SLOWER -- decelerate the ego vehicle "
-            "4. LANE_LEFT -- change to the adjacent left lane "
-            "5. LANE_RIGHT -- change to the adjacent right lane"
-        )
-        assist1 = (
-            "Understood. Please provide the current scenario or conditions, such as traffic density, speed of surrounding vehicles, "
-            "your current speed, and any other relevant information, so I can recommend the best action."
-        )
-
-        # Extract and organize vehicle state information from observations
-        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
-        ego_x, ego_y, ego_vx, ego_vy = x[0], y[0], vx[0], vy[0]
-        veh_x, veh_y, veh_vx, veh_vy = x[1:] - ego_x, y[1:] - ego_y, vx[1:], vy[1:]
-
-        lanes = y // 4 + 1
-        ego_lane = lanes[0]
-        veh_lanes = lanes[1:]
-
-        if ego_lane == 1:
-            ego_left_lane, ego_right_lane = 'Left lane: Not available\n', f'Right lane: Lane-{ego_lane + 1}\n'
-        elif ego_lane == 4:
-            ego_left_lane, ego_right_lane = f'Left lane: Lane-{ego_lane - 1}\n', 'Right lane: Not available\n'
-        else:
-            ego_left_lane, ego_right_lane = f'Left lane: Lane-{ego_lane - 1}\n', f'Right lane: Lane-{ego_lane + 1}\n'
-
-        prompt2 = (
-            f"Ego vehicle:\n\tCurrent lane: Lane-{ego_lane}\n\t{ego_left_lane}\t{ego_right_lane}\tCurrent speed: {ego_vx} m/s \n\n"
-            "Lane info:\n"
-        )
-        for i in range(4):
-            inds = np.where(veh_lanes == i + 1)[0]
-            num_v = len(inds)
-            if num_v > 0:
-                val, ind = self.find_smallest_positive(veh_x[inds])
-                true_ind = inds[ind]
-                prompt2 += (
-                    f"\tLane-{i + 1}: There are {num_v} vehicle(s) in this lane ahead of ego vehicle, "
-                    f"closest being {veh_x[true_ind]} m ahead traveling at {veh_vx[true_ind]} m/s.\n"
-                )
-            else:
-                prompt2 += f"\tLane-{i + 1} No other vehicle ahead of ego vehicle.\n"
-
-        prompt2 += (
-            "\nAttention points:\n"
-            "\t1. SLOWER has least priority and should be used only when no other action is safe.\n"
-            "\t2. DO NOT change lanes frequently.\n"
-            "\t3. Safety is priority, but do not forget efficiency.\n"
-            "\t4. Your suggested action has to be one from one of the above five listed actions - IDLE, SLOWER, FASTER, LANE_LEFT, LANE_RIGHT. \n"
-            f"Your last action was {self.prev_action}. Please recommend action for the current scenario only in this format and DONT propound anything else other than 'Final decision: <final decision>'.\n"
-        )
-
-        return prompt1, assist1, prompt2
+    
 
     def step(self, action):
         """
@@ -465,13 +313,13 @@ if __name__ == "__main__":
     print(f"Observation space: {env.observation_space}")
     print(f"Action space: {env.action_space}")
 
-    # Generate the dataset
+     # Generate the dataset
     generate_dataset_with_claude(
-        env=env,
-        file_name='highway_dataset_claude_safe_efficient.csv',
-        total_samples=10000,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(1, 3),
-        spacing_range=(2, 20),
+        env= env_llm.env,
+        file_name='claude_5k.csv',
+        total_samples=100,  # Generate 100 samples with varied configurations
+        vehicles_density_range=(1, 2.5),
+        spacing_range=(0, 20),
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-        ego_spacing_range=(1, 20)  # Define range for ego vehicle spacing
+        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     )
