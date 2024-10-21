@@ -463,7 +463,7 @@ if __name__ == ("__main__"):
 
     ##video folder path
     video_folder = "videos"
-    model_name = "testing"
+    model_name = "testing_faltu"
     video_path = f"{video_folder}/{model_name}"
 
     ##wrap video
@@ -474,7 +474,7 @@ if __name__ == ("__main__"):
         episode_predictions = []  # Store predictions for the current episode
 
         while not (done or truncated):
-            action = 1   # Predict action using the random forest model claude_query(env_llm,obs)
+            action = claude_query(env_llm,obs)   # Predict action using the random forest model 
             episode_predictions.append(action)  # Save the predicted action
 
             # Step in the environment
@@ -484,7 +484,7 @@ if __name__ == ("__main__"):
         predictions_dir = "predictions"  # Define the directory path
         if not os.path.exists(predictions_dir):
             os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testing{episode + 1}_predictions.txt")
+        prediction_file = os.path.join(predictions_dir, f"testing_faltu{episode + 1}_predictions.txt")
         with open(prediction_file, 'w') as f:
             for pred_action in episode_predictions:
                 f.write(f"{pred_action}\n")  # Write each action to the file
