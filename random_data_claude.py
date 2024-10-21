@@ -318,7 +318,7 @@ if __name__ == "__main__":
         env= env,
         file_name='claude_5k.csv',
         total_samples=5000,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(1, 2.5),
+        vehicles_density_range=(0.3, 2.5),
         spacing_range=(0, 20),
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
         ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
