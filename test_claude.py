@@ -92,7 +92,8 @@ def map_llm_action_to_label(llm_act):
     }
     return action_map.get(llm_act.upper(), 1)  # Default to IDLE if unrecognized
 
-##setup env
+##setup env , "cosd","sind", " longoff", " latoff", " angoff" 
+## cosd = {cosd}, sind = {sind}, longoff = {longoff}, latoff = {latoff}, angoff = {angoff}
 class MyHighwayEnvLLM(gym.Env):
     """
     Custom Gym environment for highway driving with LLM prompts.
@@ -105,7 +106,7 @@ class MyHighwayEnvLLM(gym.Env):
         self.config = {
             "observation": {
                 "type": "Kinematics",
-                "features": ["presence", "x", "y", "vx", "vy"],
+                "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h", "cos_d","sin_d"],
                 "absolute": True,
                 "normalize": False,
                 "vehicles_count": vehicleCount,
@@ -125,7 +126,7 @@ class MyHighwayEnvLLM(gym.Env):
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
     
     def know_env(self, obs_):
-        x, y, vx, vy = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4]
+        x, y, vx, vy,cosh, sinh, cosd, sind, longoff, latoff, angoff = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4], obs_[:, 5], obs_[:, 6], obs_[:, 7], obs_[:, 8], obs_[:, 9], obs_[:, 10], obs_[:, 11]
 
         # Step 1: Get ego vehicle's current position (x, y coordinates)
         ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
@@ -149,13 +150,13 @@ class MyHighwayEnvLLM(gym.Env):
             vehicle_heading = vehicle.heading
             veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
             veh_lanes.append(veh_lane)
-        print(f"veh_lanes = {veh_lanes} \n")
+        #print(f"veh_lanes = {veh_lanes} \n")
         veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
         veh_vx, veh_vy = vx[1:], vy[1:]
         veh_lanes = np.array(veh_lanes)
         inds = np.where(veh_lanes == ego_lane)[0]
         num_v = len(inds)
-        print(ego_vy)
+        print(f"cosh = {cosh} sinh = {sinh} ")
         
     def find_smallest_positive(self, arr):
         smallest_positive = float('inf')
@@ -449,45 +450,47 @@ if __name__ == ("__main__"):
 
     ##make env
     env_llm = MyHighwayEnvLLM(vehicleCount =10)
+    
+    
 
-    #  # Generate the dataset
-    # generate_dataset_with_claude(
-    #     env= env_llm.env,
-    #     file_name='random_test.csv',
-    #     total_samples=100,  # Generate 100 samples with varied configurations
-    #     vehicles_density_range=(1, 2.5),
-    #     spacing_range=(0, 20),
-    #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-    #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
-    # )
+     # Generate the dataset
+    generate_dataset_with_claude(
+        env= env_llm.env,
+        file_name='random_test.csv',
+        total_samples=100,  # Generate 100 samples with varied configurations
+        vehicles_density_range=(1, 2.5),
+        spacing_range=(0, 20),
+        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
+    )
 
-    ##video folder path
-    video_folder = "videos"
-    model_name = "testing_HD"
-    video_path = f"{video_folder}/{model_name}"
+    # ##video folder path
+    # video_folder = "videos"
+    # model_name = "testing_HD"
+    # video_path = f"{video_folder}/{model_name}"
 
-    ##wrap video
-    env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
+    # ##wrap video
+    # env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    for episode in trange(1, desc='Test episodes'):
-        (obs, info), done, truncated = env.reset(), False, False
-        episode_predictions = []  # Store predictions for the current episode 
-        #
-        while not (done or truncated):
-            action = claude_query(env_llm,obs) # Predict action using the random forest model 
-            episode_predictions.append(action)  # Save the predicted action
+    # for episode in trange(1, desc='Test episodes'):
+    #     (obs, info), done, truncated = env.reset(), False, False
+    #     episode_predictions = []  # Store predictions for the current episode 
+    #     #
+    #     while not (done or truncated):
+    #         action = claude_query(env_llm,obs) # Predict action using the random forest model 
+    #         episode_predictions.append(action)  # Save the predicted action
 
-            # Step in the environment
-            obs, reward, done, truncated, info = env.step(int(action))
+    #         # Step in the environment
+    #         obs, reward, done, truncated, info = env.step(int(action))
 
-        # Save predictions for this episode to a file
-        predictions_dir = "predictions"  # Define the directory path
-        if not os.path.exists(predictions_dir):
-            os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testingHD{episode + 1}_predictions.txt")
-        with open(prediction_file, 'w') as f:
-            for pred_action in episode_predictions:
-                f.write(f"{pred_action}\n")  # Write each action to the file
+    #     # Save predictions for this episode to a file
+    #     predictions_dir = "predictions"  # Define the directory path
+    #     if not os.path.exists(predictions_dir):
+    #         os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
+    #     prediction_file = os.path.join(predictions_dir, f"testingHD{episode + 1}_predictions.txt")
+    #     with open(prediction_file, 'w') as f:
+    #         for pred_action in episode_predictions:
+    #             f.write(f"{pred_action}\n")  # Write each action to the file
 
-    env.close()
-    show_videos()
+    # env.close()
+    # show_videos()
