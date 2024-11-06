@@ -9,6 +9,12 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+##to do 
+# increase dataset
+# overfitted towards 4   class weights
+# class 2 -1 misclassification
+# fine tune xgboost
+
 def train_rf(data, save_path, use_smote=False):
     # Step 1: Split the data into features and target
     X = data.drop(columns=['action'])

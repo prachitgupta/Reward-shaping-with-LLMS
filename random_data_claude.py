@@ -323,3 +323,4 @@ if __name__ == "__main__":
         lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
         ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     )
+    
