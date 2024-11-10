@@ -3,8 +3,11 @@ import gymnasium as gym
 import highway_env
 
 ##claude
-import boto3
 import os
+import requests
+import boto3
+import json
+from botocore.exceptions import ClientError
 
 # Agent
 from stable_baselines3 import DQN
@@ -19,7 +22,10 @@ import numpy as np
 import joblib
 from tqdm import trange
 import base64
+import random
+import pandas as pd
 from pathlib import Path
+import time
 
 ##visualization
 from gymnasium.wrappers import RecordVideo
@@ -104,16 +110,6 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
         time.sleep(1)
         return 'IDLE'
     
-##claude action
-def claude_query(env,obs):
-    # Generate prompt for LLM
-    prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
-    ##ask for claude response
-    llm_act = claude_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
-    ##int action
-    action = map_llm_action_to_label(llm_act)
-    return action
-
 #######
 
 # ###GROQ###
@@ -134,15 +130,8 @@ def claude_query(env,obs):
 
 #     return action
 
-# def groq_query(env,obs):
-#     # Generate prompt for LLM
-#     prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
-#     ##ask for claude response
-#     llm_act = groq_action(prompt1, assist1, prompt2, env.prev_action).strip().split('.')[0]
-#     ##int action
-#     action = map_llm_action_to_label(llm_act)
-#     return action
-# #########
+
+#########
 
 def map_llm_action_to_label(llm_act):
     """
@@ -157,6 +146,13 @@ def map_llm_action_to_label(llm_act):
     }
     return action_map.get(llm_act.upper(), 1)  # Default to IDLE if unrecognized
 
+action_dict = {
+    0: 'LANE_LEFT',
+    1: 'IDLE',
+    2: 'LANE_RIGHT',
+    3: 'FASTER',
+    4: 'SLOWER'
+}
 
 class MyHighwayEnvLLM(gym.Env):
     """
@@ -292,6 +288,25 @@ class MyHighwayEnvLLM(gym.Env):
         # Return the three prompts
         return prompt1, assist1, prompt2
     
+    # def groq_query(self,obs):
+    #     # Generate prompt for LLM
+    #     prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
+    #     ##ask for claude response
+    #     llm_act = groq_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
+    #     ##int action
+    #     action = map_llm_action_to_label(llm_act)
+    #     return action
+    
+        ##claude action
+    def claude_query(self, obs):
+        # Generate prompt for LLM
+        prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
+        ##ask for claude response
+        llm_act = claude_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
+        ##int action
+        action = map_llm_action_to_label(llm_act)
+        return action
+    
     def step(self, action):
 
         # Step the wrapped environment and capture all returned values
@@ -299,10 +314,11 @@ class MyHighwayEnvLLM(gym.Env):
 
         ##combine rewards randomly
         if np.random.rand() <= 1:
+            print("llm involved")
             ##claude
-            llm_response = claude_query(obs)
-            ##groq
-            # llm_response = groq_query(obs)
+            llm_response = self.claude_query(obs)
+            # ##groq
+            # llm_response = self.groq_query(obs)
 
             l_acts  = 0
 
@@ -338,7 +354,7 @@ if __name__ == "__main__":
 
     env_llm = MyHighwayEnvLLM(vehicleCount = 10)
 
-    model = DQN('MlpPolicy', env_llm.env,
+    model = DQN('MlpPolicy', env_llm,
                 policy_kwargs=dict(net_arch=[256, 256]),
                 learning_rate=5e-4,
                 buffer_size=15000,
