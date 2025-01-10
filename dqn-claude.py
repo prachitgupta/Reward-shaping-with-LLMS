@@ -112,26 +112,26 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
     
 #######
 
-# ###GROQ###
-# from groq import *
+###GROQ###
+from groq import *
 
-# client = Groq(api_key = "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")
+client = Groq(api_key = "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")
 
-# def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
+def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
 
-#     chat_completion = client.chat.completions.create(messages=[{"role": "user", "content": prompt1},
-#                                                            {"role": "assistant", "content": assist1},
-#                                                            {"role": "user", "content": prompt2}], model="llama3-groq-70b-8192-tool-use-preview")
+    chat_completion = client.chat.completions.create(messages=[{"role": "user", "content": prompt1},
+                                                           {"role": "assistant", "content": assist1},
+                                                           {"role": "user", "content": prompt2}], model="llama3-groq-70b-8192-tool-use-preview")
     
-#     try:
-#         action = chat_completion.choices[0].message.content.strip().split('Final decision: ')[1].strip().split('\'')[0]
-#     except:
-#         action = last_act
+    try:
+        action = chat_completion.choices[0].message.content.strip().split('Final decision: ')[1].strip().split('\'')[0]
+    except:
+        action = last_act
 
-#     return action
+    return action
 
 
-# ########
+########
 
 def map_llm_action_to_label(llm_act):
     """
@@ -288,14 +288,14 @@ class MyHighwayEnvLLM(gym.Env):
         # Return the three prompts
         return prompt1, assist1, prompt2
     
-    # def groq_query(self,obs):
-    #     # Generate prompt for LLM
-    #     prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
-    #     ##ask for claude response
-    #     llm_act = groq_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
-    #     ##int action
-    #     action = map_llm_action_to_label(llm_act)
-    #     return action
+    def groq_query(self,obs):
+        # Generate prompt for LLM
+        prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
+        ##ask for claude response
+        llm_act = groq_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
+        ##int action
+        action = map_llm_action_to_label(llm_act)
+        return action
     
         ##claude action
     def claude_query(self, obs):
@@ -315,10 +315,10 @@ class MyHighwayEnvLLM(gym.Env):
         ##combine rewards randomly
         if np.random.rand() <= 1:
             print("llm involved")
-            ##claude
-            llm_response = self.claude_query(obs)
-            # ##groq
-            # llm_response = self.groq_query(obs)
+            # ##claude
+            # llm_response = self.claude_query(obs)
+            ##groq
+            llm_response = self.groq_query(obs)
 
             l_acts  = 0
 
@@ -358,7 +358,7 @@ if __name__ == "__main__":
                 policy_kwargs=dict(net_arch=[256, 256]),
                 learning_rate=5e-4,
                 buffer_size=15000,
-                learning_starts=200,
+                learning_starts=50,
                 batch_size=32,
                 gamma=0.8,
                 train_freq=1,
@@ -367,5 +367,5 @@ if __name__ == "__main__":
                 exploration_fraction=0.7,
                 verbose=1)
 
-    model.learn(int(2e4))
+    model.learn(int(100))
     model.save('models/prachit_model_claude')
