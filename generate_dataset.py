@@ -24,6 +24,15 @@ model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
 CLAUDE_API_URL = 'https://api.anthropic.com/v1/complete'
 
+##no of vehicles in lane = same lane id  ka total
+##no of vehicles in left lane = lane id -1  ka sum
+##relative velocity of closest vehicle = directly from changi congig or - ego(2nd row se)
+##closest vehicle ka distance = 2 nd row say nikalo
+##left closest vehicle ka distance = 2 nd row say nikalo
+##rightt closest vehicle ka distance = 2 nd row say nikalo 
+## and unki relative velocities
+
+
 
 def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sample=50, temperature=0.7):
     """
