@@ -9,19 +9,14 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-##to do 
-# increase dataset
-# overfitted towards 4   class weights
-# class 2 -1 misclassification
-# fine tune xgboost
-
 def train_rf(data, save_path, use_smote=False):
     # Step 1: Split the data into features and target
     X = data.drop(columns=['action'])
     y = data['action']
 
-    # Step 2: Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Step 2: Split the dataset into train, test, and eval (60% train, 20% test, 20% eval)
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_test, X_eval, y_test, y_eval = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
     if use_smote:
         # Step 3: Apply SMOTE if specified
@@ -38,21 +33,40 @@ def train_rf(data, save_path, use_smote=False):
     rf_model = RandomForestClassifier(random_state=42, class_weight=class_weights_dict if not use_smote else None)
     rf_model.fit(X_train_final, y_train_final)
 
-    # Step 5: Model Evaluation on Test Data
-    y_pred = rf_model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Random Forest Model Accuracy: {accuracy * 100:.2f}%")
+    # Step 5: Model Evaluation on the Test Data
+    y_pred_test = rf_model.predict(X_test)
+    accuracy_test = accuracy_score(y_test, y_pred_test)
+    print(f"Random Forest Model Accuracy on Test Data: {accuracy_test * 100:.2f}%")
 
-    # Classification report
-    class_report = classification_report(y_test, y_pred, output_dict=True)
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred))
+    # Classification report on test data
+    class_report_test = classification_report(y_test, y_pred_test, output_dict=True)
+    print("Classification Report on Test Data:")
+    print(classification_report(y_test, y_pred_test))
 
-    # Confusion matrix
-    conf_matrix = confusion_matrix(y_test, y_pred)
+    # Confusion matrix for test data
+    conf_matrix_test = confusion_matrix(y_test, y_pred_test)
     plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=y.unique(), yticklabels=y.unique())
-    plt.title('Confusion Matrix')
+    sns.heatmap(conf_matrix_test, annot=True, fmt='d', cmap='Blues', xticklabels=y.unique(), yticklabels=y.unique())
+    plt.title('Confusion Matrix on Test Data')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.show()
+
+    # Step 6: Model Evaluation on the Eval Data (Final Evaluation)
+    y_pred_eval = rf_model.predict(X_eval)
+    accuracy_eval = accuracy_score(y_eval, y_pred_eval)
+    print(f"Random Forest Model Accuracy on Evaluation Data: {accuracy_eval * 100:.2f}%")
+
+    # Classification report on eval data
+    class_report_eval = classification_report(y_eval, y_pred_eval, output_dict=True)
+    print("Classification Report on Evaluation Data:")
+    print(classification_report(y_eval, y_pred_eval))
+
+    # Confusion matrix for eval data
+    conf_matrix_eval = confusion_matrix(y_eval, y_pred_eval)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(conf_matrix_eval, annot=True, fmt='d', cmap='Blues', xticklabels=y.unique(), yticklabels=y.unique())
+    plt.title('Confusion Matrix on Evaluation Data')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
     plt.show()
@@ -65,7 +79,7 @@ def train_rf(data, save_path, use_smote=False):
     print(f"Model trained using {'SMOTE' if use_smote else 'Class Weights'} with Random Forest Classifier.")
     
     # Return the classification report for further analysis if needed
-    return class_report
+    return class_report_test, class_report_eval
 
 if __name__ == "__main__":
     # Parse command-line arguments
@@ -79,5 +93,5 @@ if __name__ == "__main__":
     # Load the dataset
     data = pd.read_csv(args.data_path)
 
-    # Call the training function with the appropriate parameter
+    # Call the training function with the appropriate parameters
     train_rf(data, save_path=args.save_path, use_smote=args.use_smote)
