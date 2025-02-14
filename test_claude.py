@@ -104,6 +104,8 @@ class MyHighwayEnvLLM(gym.Env):
         self.prev_action = 'FASTER'
 
         self.config = {
+            # Set conditions that would force actions from minority classes (left, right, fast)
+        
             "observation": {
                 "type": "Kinematics",
                 "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h", "cos_d","sin_d"],
@@ -117,7 +119,9 @@ class MyHighwayEnvLLM(gym.Env):
                 "target_speeds": np.linspace(0, 32, 9),
             },
             "duration": 40,
-            "vehicles_density":2.5,
+            "vehicles_density":1,
+            'initial_spacing': 10,
+            
             "show_trajectories": True,
             "render_agent": True,
         }
@@ -125,38 +129,38 @@ class MyHighwayEnvLLM(gym.Env):
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
     
-    def know_env(self, obs_):
-        x, y, vx, vy,cosh, sinh, cosd, sind, longoff, latoff, angoff = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4], obs_[:, 5], obs_[:, 6], obs_[:, 7], obs_[:, 8], obs_[:, 9], obs_[:, 10], obs_[:, 11]
+    # def know_env(self, obs_):
+    #     x, y, vx, vy,cosh, sinh, cosd, sind, longoff, latoff, angoff = obs_[:, 1], obs_[:, 2], obs_[:, 3], obs_[:, 4], obs_[:, 5], obs_[:, 6], obs_[:, 7], obs_[:, 8], obs_[:, 9], obs_[:, 10], obs_[:, 11]
 
-        # Step 1: Get ego vehicle's current position (x, y coordinates)
-        ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
-        ego_heading = self.env.unwrapped.vehicle.heading
-        # Step 2: Get the current lane object using its start and end node names
-        ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
-        ego_x, ego_y = ego_position
-        ego_vx, ego_vy = vx[0] , vy[0]
-        print(f"ego lane : {ego_lane} \n")
+    #     # Step 1: Get ego vehicle's current position (x, y coordinates)
+    #     ego_position = self.env.unwrapped.vehicle.position  # This gives you the (x, y) tuple
+    #     ego_heading = self.env.unwrapped.vehicle.heading
+    #     # Step 2: Get the current lane object using its start and end node names
+    #     ego_lane = self.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
+    #     ego_x, ego_y = ego_position
+    #     ego_vx, ego_vy = vx[0] , vy[0]
+    #     print(f"ego lane : {ego_lane} \n")
         
-        # Other vehicles' relative positions
-        # Exclude the ego vehicle and get only other vehicles
-        all_vehicles = self.env.unwrapped.road.vehicles
-        other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
+    #     # Other vehicles' relative positions
+    #     # Exclude the ego vehicle and get only other vehicles
+    #     all_vehicles = self.env.unwrapped.road.vehicles
+    #     other_vehicles = [v for v in all_vehicles if v is not self.env.unwrapped.vehicle]
 
-        # Access position and heading of non-ego vehicles
-        ##only in roundabout 
-        veh_lanes = []
-        for vehicle in other_vehicles:
-            vehicle_position = vehicle.position
-            vehicle_heading = vehicle.heading
-            veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
-            veh_lanes.append(veh_lane)
-        #print(f"veh_lanes = {veh_lanes} \n")
-        veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
-        veh_vx, veh_vy = vx[1:], vy[1:]
-        veh_lanes = np.array(veh_lanes)
-        inds = np.where(veh_lanes == ego_lane)[0]
-        num_v = len(inds)
-        print(f"cosh = {cosh} sinh = {sinh} ")
+    #     # Access position and heading of non-ego vehicles
+    #     ##only in roundabout 
+    #     veh_lanes = []
+    #     for vehicle in other_vehicles:
+    #         vehicle_position = vehicle.position
+    #         vehicle_heading = vehicle.heading
+    #         veh_lane = self.env.unwrapped.road.network.get_closest_lane_index(vehicle_position, vehicle_heading)[2]
+    #         veh_lanes.append(veh_lane)
+    #     #print(f"veh_lanes = {veh_lanes} \n")
+    #     veh_x, veh_y = x[1:] - ego_x, y[1:] - ego_y
+    #     veh_vx, veh_vy = vx[1:], vy[1:]
+    #     veh_lanes = np.array(veh_lanes)
+    #     inds = np.where(veh_lanes == ego_lane)[0]
+    #     num_v = len(inds)
+    #     print(f"cosh = {cosh} sinh = {sinh} ")
         
     def find_smallest_positive(self, arr):
         smallest_positive = float('inf')
@@ -393,6 +397,7 @@ def claude_query(env,obs):
     action = map_llm_action_to_label(llm_act)
     return action
 
+
 def generate_dataset_with_claude(env, total_samples, file_name,
                                vehicles_density_range, spacing_range, 
                                lane_id_range=[0, 1, 2, 3], ego_spacing_range=(1, 3)):
@@ -454,43 +459,44 @@ if __name__ == ("__main__"):
     
 
      # Generate the dataset
-    generate_dataset_with_claude(
-        env= env_llm.env,
-        file_name='random_test.csv',
-        total_samples=100,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(1, 2.5),
-        spacing_range=(0, 20),
-        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
-    )
+    # generate_dataset_with_claude_for_specific_actions(env= env_llm.env, num_episodes=100, max_steps=50, save_path="dataset_minor.pkl")
+    # generate_dataset_with_claude(
+    #     env= env_llm.env,
+    #     file_name='random_test.csv',
+    #     total_samples=100,  # Generate 100 samples with varied configurations
+    #     vehicles_density_range=(1, 2.5),
+    #     spacing_range=(0, 20),
+    #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+    #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
+    # )
 
-    # ##video folder path
-    # video_folder = "videos"
-    # model_name = "testing_HD"
-    # video_path = f"{video_folder}/{model_name}"
+    ##video folder path
+    video_folder = "videos"
+    model_name = "testing_minor"
+    video_path = f"{video_folder}/{model_name}"
 
-    # ##wrap video
-    # env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
+    ##wrap video
+    env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
 
-    # for episode in trange(1, desc='Test episodes'):
-    #     (obs, info), done, truncated = env.reset(), False, False
-    #     episode_predictions = []  # Store predictions for the current episode 
-    #     #
-    #     while not (done or truncated):
-    #         action = claude_query(env_llm,obs) # Predict action using the random forest model 
-    #         episode_predictions.append(action)  # Save the predicted action
+    for episode in trange(3, desc='Test episodes'):
+        (obs, info), done, truncated = env.reset(), False, False
+        episode_predictions = []  # Store predictions for the current episode 
+        #
+        while not (done or truncated):
+            action = claude_query(env_llm,obs) # Predict action using the random forest model 
+            episode_predictions.append(action)  # Save the predicted action
 
-    #         # Step in the environment
-    #         obs, reward, done, truncated, info = env.step(int(action))
+            # Step in the environment
+            obs, reward, done, truncated, info = env.step(int(action))
 
-    #     # Save predictions for this episode to a file
-    #     predictions_dir = "predictions"  # Define the directory path
-    #     if not os.path.exists(predictions_dir):
-    #         os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-    #     prediction_file = os.path.join(predictions_dir, f"testingHD{episode + 1}_predictions.txt")
-    #     with open(prediction_file, 'w') as f:
-    #         for pred_action in episode_predictions:
-    #             f.write(f"{pred_action}\n")  # Write each action to the file
+        # Save predictions for this episode to a file
+        predictions_dir = "predictions"  # Define the directory path
+        if not os.path.exists(predictions_dir):
+            os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
+        prediction_file = os.path.join(predictions_dir, f"testing_minor{episode + 1}_predictions.txt")
+        with open(prediction_file, 'w') as f:
+            for pred_action in episode_predictions:
+                f.write(f"{pred_action}\n")  # Write each action to the file
 
-    # env.close()
-    # show_videos()
+    env.close()
+    show_videos()
