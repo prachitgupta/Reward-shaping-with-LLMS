@@ -99,7 +99,7 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, model, num_episodes=100, max_steps=50, file_name="dataset_minoe.pkl"):
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=10, max_steps=50, file_name="dataset_minor.csv"):
     dataset = []
     
     for episode in range(num_episodes):
@@ -107,19 +107,19 @@ def generate_dataset_with_claude_for_specific_actions(env, model, num_episodes=1
         # Adjusting traffic density, lane positioning, and ego vehicle speed
 
         # Set conditions that would force actions from minority classes (left, right, fast)
-        vehicles_density = random.uniform(3, 5)  # Higher density for more frequent decision-making
-        initial_spacing = random.uniform(10, 30)  # Cars will be within a reasonable distance
+        vehicles_density = random.uniform(1, 2.5)  # Higher density for more frequent decision-making
+        initial_spacing = random.uniform(5, 30)  # Cars will be within a reasonable distance
         initial_lane_id = random.choice([2, 3])  # Ego vehicle starts in the middle lanes
-        ego_spacing = random.uniform(15, 50)  # Sufficient space between ego and other vehicles
+        
 
         # Apply these specific configurations to the environment
         env.config['vehicles_density'] = vehicles_density
         env.config['initial_spacing'] = initial_spacing
         env.config['initial_lane_id'] = initial_lane_id
-        env.config['ego_spacing'] = ego_spacing
+       
 
         print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
-              f"Initial Lane ID={initial_lane_id}, Ego Spacing={ego_spacing}")
+              f"Initial Lane ID={initial_lane_id}")
 
         # Reset the environment with the new configuration
         obs = env.reset()
@@ -137,13 +137,13 @@ def generate_dataset_with_claude_for_specific_actions(env, model, num_episodes=1
             # Generate prompts for Claude, forcing decisions for minority actions (left, right, fast)
             prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
             llm_act = claude_action(prompt1, assist1, prompt2)
-
+            action_label = map_llm_action_to_label(llm_act)
             # Force only left, right, or fast actions
-            if llm_act not in ['left', 'right', 'fast']:
+            if action_label not in [0,2,3]:
                 continue  # Skip episodes where the action is from the majority class (slow, idle)
 
             # Convert LLM action to a numerical label
-            action_label = map_llm_action_to_label(llm_act)
+            
             print(f"Action label: {action_label}")
         
             next_obs, reward, done, info = env.step(action_label)
@@ -393,13 +393,14 @@ if __name__ == "__main__":
     print(f"Action space: {env.action_space}")
 
      # Generate the dataset
-    generate_dataset_with_claude(
-        env= env,
-        file_name='claude_5k.csv',
-        total_samples=5000,  # Generate 100 samples with varied configurations
-        vehicles_density_range=(0.3, 2.5),
-        spacing_range=(0, 20),
-        lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-        ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
-    )
+    # generate_dataset_with_claude(
+    #     env= env,
+    #     file_name='claude_5k.csv',
+    #     total_samples=5000,  # Generate 100 samples with varied configurations
+    #     vehicles_density_range=(0.3, 2.5),
+    #     spacing_range=(0, 20),
+    #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
+    #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
+    # )
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=100, max_steps=50, file_name="dataset_minor.csv")
     
