@@ -139,14 +139,15 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=10, max_
             llm_act = claude_action(prompt1, assist1, prompt2)
             action_label = map_llm_action_to_label(llm_act)
             # Force only left, right, or fast actions
-            if action_label not in [0,2,3]:
-                continue  # Skip episodes where the action is from the majority class (slow, idle)
+
+            # if action_label not in [0,2,3]:
+            #     continue  # Skip episodes where the action is from the majority class (slow, idle)
 
             # Convert LLM action to a numerical label
             
             print(f"Action label: {action_label}")
-        
-            next_obs, reward, done, info = env.step(action_label)
+
+            next_obs, reward, done, truncated, info = env.step(action_label)
             
             # Store transition
             episode_data.append((obs, action_label))
