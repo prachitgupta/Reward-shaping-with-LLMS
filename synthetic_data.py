@@ -90,7 +90,7 @@ def save_and_go(observations, actions, file_name):
     data = pd.DataFrame(observations)
     data['action'] = actions
 
-    dataset_dir = 'datasets'
+    dataset_dir = 'datasets_synthesiesd'
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
 
@@ -99,8 +99,10 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_steps=2, file_name="datasets_collision_free.csv"):
-    dataset = []
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_steps=2, file_name1="datasets_episodes.csv", file_name2="datasets_collision_free.csv"):
+   
+    observations_safe = []
+    actions_safe = []
     
     for episode in range(num_episodes):
         # Define the environment configuration for scenarios that would lead to 'left', 'right', or 'fast'
@@ -130,7 +132,8 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
         else:
             info = {}
 
-        episode_data = []
+        observations = []
+        actions = []
         collision_occurred = False  # Track if a collision happens in this episode
 
         for step in range(max_steps):
@@ -147,10 +150,13 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
             
             print(f"Action label: {action_label}")
 
-            next_obs, reward, done, truncated, info = env.step(action_label)
-            
             # Store transition
-            episode_data.append((obs, action_label))
+            observations.append(obs.flatten())
+            actions.append(action_label)
+            # Save dataset
+            save_and_go(observations, actions, file_name1)
+
+            next_obs, reward, done, truncated, info = env.step(action_label)
             
             # Check for collision
             if "crashed" in info and info["crashed"]:
@@ -158,37 +164,21 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
             
             obs = next_obs
 
-            row_data = list(obs) + [action_label]  # Append action label to observation data
-            episode_data.append(row_data)
-            
             if done:
-                break
-
-            # Save dataset
-            # data = np.array(episode_data)
-            data = pd.DataFrame(episode_data)
-            dataset_dir = 'datasets_try'
-            if not os.path.exists(dataset_dir):
-                os.makedirs(dataset_dir)
-            dataset_path = os.path.join(dataset_dir, "data_episodes.csv")
-            data.to_csv(dataset_path, index=False)
+                break            
 
         # Only save episode data if no collision occurred
         if not collision_occurred:
-            dataset.extend(episode_data)
+            observations_safe.extend(observations)
+            actions_safe.extend(actions)
             print(f"Episode {episode + 1}: Recorded {len(episode_data)} steps.")
         else:
             print(f"Episode {episode + 1}: Collision occurred, discarding data.")
 
     # Save dataset
     # collision_free_data = np.array(dataset)
-    collision_free_data = pd.DataFrame(dataset)
-    dataset_dir = 'datasets_final'
-    if not os.path.exists(dataset_dir):
-        os.makedirs(dataset_dir)
-
-    dataset_path = os.path.join(dataset_dir, file_name)
-    collision_free_data.to_csv(dataset_path, index=False)
+    # Save dataset
+    save_and_go(observations_safe, actions_safe, file_name2)
 
 
 
@@ -415,5 +405,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=1, max_steps=2, file_name="dataset_minor.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=1, max_steps=2, file_name1="datasets_episodes.csv", file_name2="datasets_collision_free.csv")
     
