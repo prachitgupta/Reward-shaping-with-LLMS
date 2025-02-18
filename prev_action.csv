@@ -1,0 +1,2 @@
+vehicles_in_ego_lane,vehicles_in_left_lane,vehicles_in_right_lane,closest_in_ego_lane_dist,closest_left_lane_dist,closest_right_lane_dist,relative_velocity_ego_lane,relative_velocity_left_lane,relative_velocity_right_lane,prev_action,action
+2.0,0.0,1.0,40.25776000000002,0.0,85.12244999999999,-1.922905,0.0,-1.155543999999999,SLOWER,1
