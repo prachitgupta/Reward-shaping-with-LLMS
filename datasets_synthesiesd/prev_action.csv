@@ -1,0 +1,2 @@
+0,action
+"{'vehicles_in_ego_lane': np.float64(0.0), 'vehicles_in_left_lane': np.float64(0.0), 'vehicles_in_right_lane': np.float64(4.0), 'closest_in_ego_lane_dist': np.float64(10000.0), 'closest_left_lane_dist': np.float64(0.0), 'closest_right_lane_dist': np.float64(11.34757000000002), 'relative_velocity_ego_lane': np.float64(10000.0), 'relative_velocity_left_lane': np.float64(0.0), 'relative_velocity_right_lane': np.float64(-1.532879999999999), 'prev_action': 'SLOWER'}",1
