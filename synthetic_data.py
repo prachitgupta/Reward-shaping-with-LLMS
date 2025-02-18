@@ -99,7 +99,7 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, num_episodes=200, max_steps=50, file_name1="datasets_episodes.csv", file_name2="datasets_collision_free.csv"):
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=200, max_steps=50, file_name1="datasets_episodes_extreme_lanes.csv", file_name2="datasets_collision_free_extreme_lanes.csv"):
    
     observations_safe = []
     actions_safe = []
@@ -406,5 +406,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=200, max_steps=50, file_name1="datasets_episodes.csv", file_name2="datasets_collision_free.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=200, max_steps=50, file_name1="datasets_episodes_extreme_lanes.csv", file_name2="datasets_collision_free_extreme_lanes.csv")
     
