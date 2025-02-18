@@ -171,7 +171,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
         if not collision_occurred:
             observations_safe.extend(observations)
             actions_safe.extend(actions)
-            print(f"Episode {episode + 1}: Recorded {len(episode_data)} steps.")
+            print(f"Episode {episode + 1}: Recorded {len(actions)} steps.")
         else:
             print(f"Episode {episode + 1}: Collision occurred, discarding data.")
 
