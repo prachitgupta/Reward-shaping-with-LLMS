@@ -173,6 +173,7 @@ for _ in range(1):  # Generate 10 scenarios
     # Send to Claude API
     action = claude_action(prompt1, assist1, prompt2)
     action_label = map_llm_action_to_label(action)
+    prev_action_label = map_llm_action_to_label(prev_action)
     
     observation = [
         vehicles_in_ego_lane,
@@ -184,7 +185,7 @@ for _ in range(1):  # Generate 10 scenarios
         relative_velocity_ego_lane,
         relative_velocity_left_lane,
         relative_velocity_right_lane,
-        prev_action
+        prev_action_label
     ]
     observations.append(observation)
     actions.append(action_label)
