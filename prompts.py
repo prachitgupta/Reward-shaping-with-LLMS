@@ -68,22 +68,37 @@ def map_llm_action_to_label(llm_act):
     }
     return action_map.get(llm_act.upper(), 1)  # Default to IDLE if unrecognized
 
-
 def save_and_go(observations, actions, file_name):
-    # Combine observations and actions into a single list of dictionaries
-    combined_data = []
-    for observation, action in zip(observations, actions):
-        # Add the action label as a new key-value pair to the observation dictionary
-        observation['action'] = action
-        combined_data.append(observation)
+    """
+    Saves the generated dataset to a CSV file.
+    """
+    observations = np.array(observations)
+    actions = np.array(actions)
 
-    # Convert the combined data into a pandas DataFrame
-    df = pd.DataFrame(combined_data)
+    data = pd.DataFrame(observations, columns=[
+    'vehicles_in_ego_lane',
+    'vehicles_in_left_lane',
+    'vehicles_in_right_lane',
+    'closest_in_ego_lane_dist',
+    'closest_left_lane_dist',
+    'closest_right_lane_dist',
+    'relative_velocity_ego_lane',
+    'relative_velocity_left_lane',
+    'relative_velocity_right_lane',
+    'previous_actio',
+    'action'
+])
 
-    # Save the DataFrame to a CSV file
-    df.to_csv(file_name, index=False)
-    print(f"Data saved to {file_name}")
+    data['action'] = actions
 
+    dataset_dir = 'datasets_synthesiesd'
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+
+    dataset_path = os.path.join(dataset_dir, file_name)
+    data.to_csv(dataset_path, index=False)
+
+    print(f"Dataset saved to {dataset_path}")
 
 
 
@@ -160,18 +175,18 @@ for _ in range(1):  # Generate 10 scenarios
     action = claude_action(prompt1, assist1, prompt2)
     action_label = map_llm_action_to_label(action)
     
-    observation = {
-        'vehicles_in_ego_lane': vehicles_in_ego_lane,
-        'vehicles_in_left_lane': vehicles_in_left_lane,
-        'vehicles_in_right_lane': vehicles_in_right_lane,
-        'closest_in_ego_lane_dist': closest_in_ego_lane_dist,
-        'closest_left_lane_dist': closest_left_lane_dist,
-        'closest_right_lane_dist': closest_right_lane_dist,
-        'relative_velocity_ego_lane': relative_velocity_ego_lane,
-        'relative_velocity_left_lane': relative_velocity_left_lane,
-        'relative_velocity_right_lane': relative_velocity_right_lane,
-        'prev_action': prev_action,
-    }
+    observation = [
+        vehicles_in_ego_lane,
+        vehicles_in_left_lane,
+        vehicles_in_right_lane,
+        closest_in_ego_lane_dist,
+        closest_left_lane_dist,
+        closest_right_lane_dist,
+        relative_velocity_ego_lane,
+        relative_velocity_left_lane,
+        relative_velocity_right_lane,
+        prev_action
+    ]
     observations.append(observation)
     actions.append(action_label)
 
