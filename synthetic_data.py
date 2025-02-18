@@ -99,7 +99,7 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_steps=50, file_name="datasets_collision_free.csv"):
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_steps=2, file_name="datasets_collision_free.csv"):
     dataset = []
     
     for episode in range(num_episodes):
@@ -157,6 +157,9 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
                 collision_occurred = True  # Mark the episode as invalid
             
             obs = next_obs
+
+            row_data = list(obs) + [action_label]  # Append action label to observation data
+            episode_data.append(row_data)
             
             if done:
                 break
@@ -167,7 +170,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
             dataset_dir = 'datasets_try'
             if not os.path.exists(dataset_dir):
                 os.makedirs(dataset_dir)
-            dataset_path = os.path.join(dataset_dir, "data_episodes")
+            dataset_path = os.path.join(dataset_dir, "data_episodes.csv")
             data.to_csv(dataset_path, index=False)
 
         # Only save episode data if no collision occurred
@@ -412,5 +415,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=1, max_steps=50, file_name="dataset_minor.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=1, max_steps=2, file_name="dataset_minor.csv")
     
