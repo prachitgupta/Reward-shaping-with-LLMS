@@ -99,7 +99,7 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, num_episodes=100, max_steps=50, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv"):
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=2, max_steps=5, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv"):
    
     observations_safe = []
     actions_safe = []
@@ -113,17 +113,16 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=100, max
         # Set conditions that would force actions from minority classes (left, right, fast)
         vehicles_density = random.uniform(1, 2.5)  # Higher density for more frequent decision-making
         initial_spacing = random.uniform(5, 30)  # Cars will be within a reasonable distance
-        initial_lane_id = random.choice([1, 4])  # Ego vehicle starts in the middle lanes
+        # initial_lane_id = random.choice([1, 4])  # Ego vehicle starts in the middle lanes
         
 
         # Apply these specific configurations to the environment
         env.config['vehicles_density'] = vehicles_density
         env.config['initial_spacing'] = initial_spacing
-        env.config['initial_lane_id'] = initial_lane_id
+        # env.config['initial_lane_id'] = initial_lane_id
        
 
-        print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}, "
-              f"Initial Lane ID={initial_lane_id}")
+        print(f"\nConfig: Density={vehicles_density}, Initial Spacing={initial_spacing}")
 
         # Reset the environment with the new configuration
         obs = env.reset()
@@ -414,5 +413,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=2, max_steps=50, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=2, max_steps=5, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv")
     
