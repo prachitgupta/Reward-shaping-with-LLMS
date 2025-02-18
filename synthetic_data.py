@@ -162,7 +162,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
                 break
 
             # Save dataset
-            data = np.array(episode_data)
+            # data = np.array(episode_data)
             data = pd.DataFrame(episode_data)
             dataset_dir = 'datasets_try'
             if not os.path.exists(dataset_dir):
@@ -178,7 +178,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
             print(f"Episode {episode + 1}: Collision occurred, discarding data.")
 
     # Save dataset
-    collision_free_data = np.array(dataset)
+    # collision_free_data = np.array(dataset)
     collision_free_data = pd.DataFrame(dataset)
     dataset_dir = 'datasets_final'
     if not os.path.exists(dataset_dir):
