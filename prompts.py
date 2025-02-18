@@ -130,13 +130,18 @@ for _ in range(3):  # Generate 10 scenarios
     ego_lane = random.randint(1, 4)
     ego_speed = random.uniform(20, 26)  # Speed between 10 and 30 m/s
 
+    closest_ego_speed  = relative_velocity_ego_lane +  ego_speed
+    closest_left_speed  = relative_velocity_left_lane +  ego_speed
+    closest_right_speed  = relative_velocity_right_lane +  ego_speed
+
+
     ego_left_lane = f"Left lane: {'Not available' if ego_lane == 1 else 'Lane-' + str(ego_lane - 1)}\n"
     ego_right_lane = f"Right lane: {'Not available' if ego_lane == 4 else 'Lane-' + str(ego_lane + 1)}\n"
 
     lane_info = f"Lane info:\n\
-    \tLane-1: {vehicles_in_left_lane} vehicles in left lane, closest at {closest_left_lane_dist} m.\n\
-    \tLane-2: {vehicles_in_ego_lane} vehicles in ego lane, closest at {closest_in_ego_lane_dist} m.\n\
-    \tLane-3: {vehicles_in_right_lane} vehicles in right lane, closest at {closest_right_lane_dist} m.\n"
+    \tLane-1: {vehicles_in_left_lane} vehicles in left lane, closest at {closest_left_lane_dist} traveling at {closest_left_speed}' m/s.\n\
+    \tLane-2: {vehicles_in_ego_lane} vehicles in ego lane, closest at {closest_in_ego_lane_dist} m traveling at {closest_ego_speed} \n\
+    \tLane-3: {vehicles_in_right_lane} vehicles in right lane, closest at {closest_right_lane_dist} m traveling at {closest_right_speed}\n"
 
     prompt1 = f"You are claude, a large language model. You are now acting as a mature driving assistant, who can give accurate and correct advice for human drivers in complex urban driving scenarios. The information in the current scenario:\n\
                 You, the 'ego' car, are now driving on a highway. You have already driven for 0 seconds.\n\
