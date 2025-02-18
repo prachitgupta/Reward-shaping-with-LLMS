@@ -137,6 +137,9 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=100, max
         
         collision_occurred = False  # Track if a collision happens in this episode
 
+        observations_epi = []
+        actions_epi = []
+
         for step in range(max_steps):
             # Generate prompts for Claude, forcing decisions for minority actions (left, right, fast)
             prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
@@ -154,7 +157,11 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=100, max
             # Store transition
             observations.append(obs.flatten())
             actions.append(action_label)
-            # Save dataset
+
+            ##per epi
+            observations_epi.append(obs.flatten())
+            actions_epi.append(action_label)
+            
             save_and_go(observations, actions, file_name1)
 
             next_obs, reward, done, truncated, info = env.step(action_label)
@@ -170,8 +177,9 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=100, max
 
         # Only save episode data if no collision occurred
         if not collision_occurred:
-            observations_safe.extend(observations)
-            actions_safe.extend(actions)
+            observations_safe.extend(observations_epi)
+            actions_safe.extend(actions_epi)
+            
             print(f"Episode {episode + 1}: Recorded {len(actions)} steps.")
         else:
             print(f"Episode {episode + 1}: Collision occurred, discarding data.")
@@ -406,5 +414,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=10, max_steps=5, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=2, max_steps=50, file_name1="datasets_episodes_all.csv", file_name2="datasets_collision_free_all.csv")
     
