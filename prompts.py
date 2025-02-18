@@ -85,8 +85,7 @@ def save_and_go(observations, actions, file_name):
     'relative_velocity_ego_lane',
     'relative_velocity_left_lane',
     'relative_velocity_right_lane',
-    'previous_actio',
-    'action'
+    'previous_action'
 ])
 
     data['action'] = actions
