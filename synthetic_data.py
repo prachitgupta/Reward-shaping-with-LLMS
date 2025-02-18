@@ -99,7 +99,7 @@ def save_and_go(observations, actions, file_name):
 
     print(f"Dataset saved to {dataset_path}")
 
-def generate_dataset_with_claude_for_specific_actions(env, num_episodes=10, max_steps=50, file_name="dataset_minor.csv"):
+def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_steps=50, file_name="datasets_collision_free.csv"):
     dataset = []
     
     for episode in range(num_episodes):
@@ -161,6 +161,15 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=10, max_
             if done:
                 break
 
+            # Save dataset
+            data = np.array(episode_data)
+            data = pd.DataFrame(episode_data)
+            dataset_dir = 'datasets_try'
+            if not os.path.exists(dataset_dir):
+                os.makedirs(dataset_dir)
+            dataset_path = os.path.join(dataset_dir, "data_episodes")
+            data.to_csv(dataset_path, index=False)
+
         # Only save episode data if no collision occurred
         if not collision_occurred:
             dataset.extend(episode_data)
@@ -169,9 +178,9 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=10, max_
             print(f"Episode {episode + 1}: Collision occurred, discarding data.")
 
     # Save dataset
-    data = np.array(episodes_data)
-    data = pd.DataFrame(episode_data)
-    dataset_dir = 'datasets_try'
+    collision_free_data = np.array(dataset)
+    collision_free_data = pd.DataFrame(dataset)
+    dataset_dir = 'datasets_final'
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
 
@@ -403,5 +412,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=100, max_steps=50, file_name="dataset_minor.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=1, max_steps=50, file_name="dataset_minor.csv")
     
