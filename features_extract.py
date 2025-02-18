@@ -69,7 +69,7 @@ def extract_features_from_dataset(data):
             relative_velocity_right_lane = relative_velocities[closest_right_index]
 
         previous_action_1 = data[i - 1, 50] if i > 0 else 0
-        previous_action_2 = data[i - 2, 50] if i > 1 else 0
+        #previous_action_2 = data[i - 2, 50] if i > 1 else 0
             
         # Append computed features
         processed_data.append([
@@ -83,7 +83,7 @@ def extract_features_from_dataset(data):
             relative_velocity_left_lane,
             relative_velocity_right_lane,
             previous_action_1,
-            previous_action_2,
+            #previous_action_2,
             actions
         ])
 
@@ -108,10 +108,10 @@ processed_df = pd.DataFrame(processed_features, columns=[
     'relative_velocity_left_lane',
     'relative_velocity_right_lane',
     'previous_action_1',
-    'previous_action_2',
+    #'previous_action_2',
     'action'
 ])
 
 # Save processed dataset
-processed_df.to_csv('datasets_try/processed_features2.csv', index=False)
-print("Processed dataset saved as 'processed_features2.csv'")
+processed_df.to_csv('datasets_try/processed_features5.csv', index=False)
+print("Processed dataset saved as 'processed_features5.csv'")

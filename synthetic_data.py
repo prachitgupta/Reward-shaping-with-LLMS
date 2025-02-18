@@ -103,6 +103,8 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=200, max
    
     observations_safe = []
     actions_safe = []
+    observations = []
+    actions = []
     
     for episode in range(num_episodes):
         # Define the environment configuration for scenarios that would lead to 'left', 'right', or 'fast'
@@ -111,7 +113,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=200, max
         # Set conditions that would force actions from minority classes (left, right, fast)
         vehicles_density = random.uniform(1, 2.5)  # Higher density for more frequent decision-making
         initial_spacing = random.uniform(5, 30)  # Cars will be within a reasonable distance
-        initial_lane_id = random.choice([2, 3])  # Ego vehicle starts in the middle lanes
+        initial_lane_id = random.choice([1, 4])  # Ego vehicle starts in the middle lanes
         
 
         # Apply these specific configurations to the environment
@@ -132,8 +134,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=200, max
         else:
             info = {}
 
-        observations = []
-        actions = []
+        
         collision_occurred = False  # Track if a collision happens in this episode
 
         for step in range(max_steps):
