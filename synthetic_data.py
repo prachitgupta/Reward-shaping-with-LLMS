@@ -185,7 +185,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=1, max_s
         os.makedirs(dataset_dir)
 
     dataset_path = os.path.join(dataset_dir, file_name)
-    data.to_csv(dataset_path, index=False)
+    collision_free_data.to_csv(dataset_path, index=False)
 
 
 
