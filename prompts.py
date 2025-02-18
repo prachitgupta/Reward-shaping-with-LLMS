@@ -68,24 +68,22 @@ def map_llm_action_to_label(llm_act):
     }
     return action_map.get(llm_act.upper(), 1)  # Default to IDLE if unrecognized
 
+
 def save_and_go(observations, actions, file_name):
-    """
-    Saves the generated dataset to a CSV file.
-    """
-    observations = np.array(observations)
-    actions = np.array(actions)
+    # Combine observations and actions into a single list of dictionaries
+    combined_data = []
+    for observation, action in zip(observations, actions):
+        # Add the action label as a new key-value pair to the observation dictionary
+        observation['action'] = action
+        combined_data.append(observation)
 
-    data = pd.DataFrame(observations)
-    data['action'] = actions
+    # Convert the combined data into a pandas DataFrame
+    df = pd.DataFrame(combined_data)
 
-    dataset_dir = 'datasets_synthesiesd'
-    if not os.path.exists(dataset_dir):
-        os.makedirs(dataset_dir)
+    # Save the DataFrame to a CSV file
+    df.to_csv(file_name, index=False)
+    print(f"Data saved to {file_name}")
 
-    dataset_path = os.path.join(dataset_dir, file_name)
-    data.to_csv(dataset_path, index=False)
-
-    print(f"Dataset saved to {dataset_path}")
 
 
 
