@@ -90,7 +90,7 @@ def extract_features_from_dataset(data):
     return np.array(processed_data)
 
 # Load the dataset
-file_path = 'datasets/claude_5k.csv'
+file_path = 'datasets_synthesiesd/datasets_collision_free_extreme_lanes.csv'
 data = pd.read_csv(file_path).values
 
 # Extract features from the dataset
@@ -113,5 +113,5 @@ processed_df = pd.DataFrame(processed_features, columns=[
 ])
 
 # Save processed dataset
-processed_df.to_csv('datasets_try/processed_features5.csv', index=False)
-print("Processed dataset saved as 'processed_features5.csv'")
+processed_df.to_csv('datasets_try/processed_features_el_cl.csv', index=False)
+print("Processed dataset saved as 'processed_features6.csv'")
