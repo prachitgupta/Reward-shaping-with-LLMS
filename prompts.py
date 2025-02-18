@@ -110,7 +110,7 @@ observations = []
 actions = []
 
 # Simulate generating prompts, sending them to the Claude API, and recording the response
-for _ in range(1):  # Generate 10 scenarios
+for _ in range(3):  # Generate 10 scenarios
     # Randomly sample from the dataset
     sample = dataset.sample()
 
