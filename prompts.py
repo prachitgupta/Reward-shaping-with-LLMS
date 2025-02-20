@@ -124,7 +124,7 @@ for _ in range(200):  # Generate 10 scenarios
     relative_velocity_ego_lane = sample['relative_velocity_ego_lane'].values[0]
     relative_velocity_left_lane = sample['relative_velocity_left_lane'].values[0]
     relative_velocity_right_lane = sample['relative_velocity_right_lane'].values[0]
-    prev_action = 'SLOWER'  # Previous action is always SLOWER
+    prev_action = 'FASTER'  # Previous action is always SLOWER
 
     # Generate the prompt based on the features
     ego_lane = random.randint(1, 4)
@@ -195,5 +195,5 @@ for _ in range(200):  # Generate 10 scenarios
     observations.append(observation)
     actions.append(action_label)
 
-save_and_go(observations, actions, "prev_action.csv")
+save_and_go(observations, actions, "prev_action_fast.csv")
 
