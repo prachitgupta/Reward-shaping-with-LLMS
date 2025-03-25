@@ -27,9 +27,13 @@ from gymnasium.wrappers import RecordVideo
 
 
 ###setup claude
+
+
+                    
 # Define Boto3 client for Bedrock
 client = boto3.client("bedrock-runtime", region_name="us-east-1")
-model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+model_id5  = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+model_id7 ="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 # Claude API settings
 CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
@@ -38,21 +42,26 @@ CLAUDE_API_URL = 'https://api.anthropic.com/v1/complete'
 
 
 
-def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sample=50, temperature=0.7):
+def claude_action(prompt1, assist1, prompt2, model_id=None, temperature=0.7):
     """
-    Sends prompts to Claude.ai and retrieves the recommended action.
+    Sends prompts to Claude via AWS Bedrock and retrieves the recommended action.
+    
+    Args:
+        prompt1: First part of the prompt
+        assist1: Assistant's response part
+        prompt2: Final prompt part
+        model_id: Which Claude model to use (model_id5 or model_id7)
+        temperature: Controls randomness (0.1 for more deterministic)
+    
+    Returns:
+        Recommended action string (e.g., 'LANE_LEFT', 'IDLE')
     """
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {CLAUDE_API_KEY}',
-    }
-
     full_prompt = f"{prompt1}\n\n{assist1}\n\n{prompt2}"
     
     native_request = {
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 1024,
-        "temperature": 0.1,
+        "temperature": temperature,
         "messages": [
             {
                 "role": "user",
@@ -60,20 +69,26 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
             }
         ],
     }
-    request = json.dumps(native_request)
+    
     try:
-        response = client.invoke_model(modelId=model_id, body=request)
+        # Use the specified model_id or default to Claude 3.5
+        response = client.invoke_model(
+            modelId=model_id if model_id else model_id5,
+            body=json.dumps(native_request)
+        )
+        
         model_response = json.loads(response["body"].read())
-        response_json = model_response["content"][0]["text"]
-        #action_text = response_json.get('completion', '').strip()
-        if 'Final decision:' in response_json:
-            action = response_json.split('Final decision:')[-1].strip().upper()
+        response_text = model_response["content"][0]["text"]
+        
+        if 'Final decision:' in response_text:
+            action = response_text.split('Final decision:')[-1].strip().upper()
             return action
         else:
-            print(f"Unexpected response format: {action_text}")
+            print(f"Unexpected response format: {response_text}")
             return 'IDLE'
-    except requests.exceptions.RequestException as e:
-        print(f"Error communicating with Claude.ai: {e}")
+            
+    except Exception as e:
+        print(f"Error communicating with Claude: {str(e)}")
         time.sleep(1)
         return 'IDLE'
     
@@ -450,53 +465,122 @@ def generate_dataset_with_claude(env, total_samples, file_name,
         print(f"Dataset saved to {dataset_path}")
         
 
-if __name__ == ("__main__"):
-    
+if __name__ == "__main__":
+    # Base setting
+    vehicleCount = 10
 
-    ##make env
-    env_llm = MyHighwayEnvLLM(vehicleCount =10)
-    
-    
+    # Environment configuration
+    config = {
+        "observation": {
+            "type": "Kinematics",
+            "features": ["presence", "x", "y", "vx", "vy"],
+            "absolute": True,
+            "normalize": False,
+            "vehicles_count": vehicleCount,
+            "see_behind": True,
+        },
+        "action": {
+            "type": "DiscreteMetaAction",
+            "target_speeds": np.linspace(0, 32, 9),
+        },
+        "duration": 40,
+        "vehicles_density": 1.55,
+        'ego_Spacing': 0,
+        "show_trajectories": True,
+        "render_agent": True,
+    }
 
-     # Generate the dataset
-    # generate_dataset_with_claude_for_specific_actions(env= env_llm.env, num_episodes=100, max_steps=50, save_path="dataset_minor.pkl")
-    # generate_dataset_with_claude(
-    #     env= env_llm.env,
-    #     file_name='random_test.csv',
-    #     total_samples=100,  # Generate 100 samples with varied configurations
-    #     vehicles_density_range=(1, 2.5),
-    #     spacing_range=(0, 20),
-    #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
-    #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
-    # )
+    # Create directory for action predictions storage if it doesn't exist
+    predictions_dir = 'predictions/ANALYSIS'
+    if not os.path.exists(predictions_dir):
+        os.makedirs(predictions_dir)
 
-    ##video folder path
-    video_folder = "videos"
-    model_name = "testing_minor"
-    video_path = f"{video_folder}/{model_name}"
+    env = gym.make('highway-v0', render_mode='rgb_array', config=config)
 
-    ##wrap video
-    env = RecordVideo(env_llm.env, video_folder=video_path, episode_trigger=lambda ep: True)
+    num_episodes = 100
+    episodes_per_model = 50
 
-    for episode in trange(3, desc='Test episodes'):
-        (obs, info), done, truncated = env.reset(), False, False
-        episode_predictions = []  # Store predictions for the current episode 
-        #
-        while not (done or truncated):
-            action = claude_query(env_llm,obs) # Predict action using the random forest model 
-            episode_predictions.append(action)  # Save the predicted action
+    # Results storage
+    results = {
+        'claude_3.5': {
+            'num_collisions': 0,
+            'total_score': 0,
+            'episode_data': []
+        },
+        'claude_3.7': {
+            'num_collisions': 0,
+            'total_score': 0,
+            'episode_data': []
+        }
+    }
 
-            # Step in the environment
-            obs, reward, done, truncated, info = env.step(int(action))
+    # Run test episodes for both models
+    for episode in trange(num_episodes, desc='Evaluating episodes'):
+        # Determine which model to use
+        if episode < episodes_per_model:
+            current_model = 'claude_3.5'
+            model_id = model_id5
+        else:
+            current_model = 'claude_3.7'
+            model_id = model_id7
 
-        # Save predictions for this episode to a file
-        predictions_dir = "predictions"  # Define the directory path
-        if not os.path.exists(predictions_dir):
-            os.makedirs(predictions_dir)  # Create the directory if it doesn't exist
-        prediction_file = os.path.join(predictions_dir, f"testing_minor{episode + 1}_predictions.txt")
-        with open(prediction_file, 'w') as f:
-            for pred_action in episode_predictions:
-                f.write(f"{pred_action}\n")  # Write each action to the file
+        collision_occurred = False
+        episode_score = 0
+        episode_actions = []
+        
+        actions_file_path = os.path.join(predictions_dir, f'episode_{episode}_actions_{current_model}.txt')
+        
+        with open(actions_file_path, 'w') as action_file:
+            (obs, info), done, truncated = env.reset(), False, False
+            while not (done or truncated):
+                # Generate prompt for LLM
+                prompt1, assist1, prompt2 = MyHighwayEnvLLM(vehicleCount).prompt_design_safe(obs)
+                
+                # Get action from current model
+                llm_act = claude_action(prompt1, assist1, prompt2, model_id=model_id).strip().split('.')[0]
+                action = map_llm_action_to_label(llm_act)
+                
+                obs, reward, done, truncated, info = env.step(int(action))
+                episode_score += reward
+                episode_actions.append(action)
+                
+                # Log the action
+                action_file.write(f"Action: {action}\n")
+                
+                # Check for collision
+                if "crashed" in info and info["crashed"]:
+                    collision_occurred = True
 
+        # Store results
+        results[current_model]['episode_data'].append({
+            'episode': episode,
+            'score': episode_score,
+            'collision': collision_occurred,
+            'actions': episode_actions
+        })
+        
+        if collision_occurred:
+            results[current_model]['num_collisions'] += 1
+        results[current_model]['total_score'] += episode_score
+
+    # Close the environment
     env.close()
-    show_videos()
+
+    # Print and save results
+    for model_name, model_results in results.items():
+        print(f"\nResults for {model_name}:")
+        print(f"Total Collisions: {model_results['num_collisions']}/{episodes_per_model}")
+        print(f"Total Score: {model_results['total_score']}")
+        print(f"Average Score per Episode: {model_results['total_score'] / episodes_per_model:.2f}")
+        print(f"Collision Rate: {model_results['num_collisions'] / episodes_per_model:.2%}")
+        
+        # Save detailed results to CSV
+        results_df = pd.DataFrame(model_results['episode_data'])
+        results_df.to_csv(f'{predictions_dir}/{model_name}_results.csv', index=False)
+
+    # Compare models
+    print("\nModel Comparison:")
+    print(f"Claude 3.5 Sonnet Average Score: {results['claude_3.5']['total_score'] / episodes_per_model:.2f}")
+    print(f"Claude 3.7 Sonnet Average Score: {results['claude_3.7']['total_score'] / episodes_per_model:.2f}")
+    print(f"Claude 3.5 Sonnet Collision Rate: {results['claude_3.5']['num_collisions'] / episodes_per_model:.2%}")
+    print(f"Claude 3.7 Sonnet Collision Rate: {results['claude_3.7']['num_collisions'] / episodes_per_model:.2%}")
