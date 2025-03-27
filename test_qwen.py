@@ -34,18 +34,18 @@ import os
 import time
 
 # Hugging Face API setup
-HF_API_TOKEN = os.getenv("")  # Set your Hugging Face token
+# Set API token
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")  # Ensure this is set in your environment
 HF_API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-14B-Instruct-1M"
 
 def qwen_action(prompt1, assist1, prompt2, temperature=0.7):
-        
     full_prompt = f"{prompt1}\n\n{assist1}\n\n{prompt2}"
-    
+
     headers = {
         "Authorization": f"Bearer {HF_API_TOKEN}",
         "Content-Type": "application/json"
     }
-    
+
     payload = {
         "inputs": full_prompt,
         "parameters": {
@@ -55,27 +55,31 @@ def qwen_action(prompt1, assist1, prompt2, temperature=0.7):
             "do_sample": True
         }
     }
-    
+
     try:
         response = requests.post(HF_API_URL, headers=headers, json=payload)
-        response.raise_for_status()
-        response_text = response.json()[0]['generated_text']
-        
-        if 'Final decision:' in response_text:
-            action = response_text.split('Final decision:')[-1].strip().upper()
-            return action.split('.')[0]  # Take first sentence only
+        response.raise_for_status()  # Raise error if request fails
+        response_json = response.json()
+
+        # Ensure response contains expected key
+        if isinstance(response_json, list) and "generated_text" in response_json[0]:
+            response_text = response_json[0]["generated_text"]
+            if 'Final decision:' in response_text:
+                action = response_text.split('Final decision:')[-1].strip().upper()
+                return action.split('.')[0]  # Take first sentence only
+            return "IDLE"
         else:
-            print(f"Unexpected response format: {response_text}")
-            return 'IDLE'
-            
+            print(f"Unexpected response format: {response_json}")
+            return "IDLE"
+
     except requests.exceptions.RequestException as e:
         print(f"Error with Qwen API: {str(e)}")
         time.sleep(1)
-        return 'IDLE'
+        return "IDLE"
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
-        return 'IDLE'
-
+        return "IDLE"
+        
 # Keep the same action mapping function
 def map_llm_action_to_label(llm_act):
     """
