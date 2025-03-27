@@ -497,8 +497,8 @@ if __name__ == "__main__":
 
     env = gym.make('highway-v0', render_mode='rgb_array', config=config)
 
-    num_episodes = 50
-    episodes_per_model = 50
+    num_episodes = 100
+    episodes_per_model = 100
 
     # Results storage
     results = {
