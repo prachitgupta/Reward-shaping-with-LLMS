@@ -28,58 +28,58 @@ from pathlib import Path
 from gymnasium.wrappers import RecordVideo
 
 
-from transformers import AutoTokenizer
-import requests
 import os
 import time
+from huggingface_hub import InferenceClient
 
-# Hugging Face API setup
-# Set API token
-HF_API_TOKEN = os.getenv("HF_API_TOKEN")  # Ensure this is set in your environment
-HF_API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-14B-Instruct-1M"
+# Load API token from environment variable
+api_key = os.getenv("HF_API_TOKEN")
 
-def qwen_action(prompt1, assist1, prompt2, temperature=0.7):
+# Initialize Hugging Face client
+client = InferenceClient(
+    model="Qwen/Qwen2-1.5B-Instruct",
+    api_key=api_key
+)
+
+def qwen_action(prompt1, assist1, prompt2, temperature=0.7, max_retries=3):
+    """
+    Generates a response using the Qwen model and extracts the final decision.
+    
+    Args:
+        prompt1 (str): Initial user query.
+        assist1 (str): Context or assistant's prior response.
+        prompt2 (str): Follow-up user query.
+        temperature (float): Controls randomness (default: 0.7).
+        max_retries (int): Number of retry attempts if API fails (default: 3).
+    
+    Returns:
+        str: Extracted decision from the model output or "IDLE" if unsuccessful.
+    """
+    
     full_prompt = f"{prompt1}\n\n{assist1}\n\n{prompt2}"
+    
+    for attempt in range(max_retries):
+        try:
+            # Call Hugging Face Inference API
+            output = client.text_generation(
+                full_prompt,
+                max_new_tokens=50,
+                temperature=temperature
+            )
 
-    headers = {
-        "Authorization": f"Bearer {HF_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
+            # Ensure output is valid
+            if output and "Final decision:" in output:
+                action = output.split("Final decision:")[-1].strip().upper()
+                return action.split('.')[0]  # Return only the first part of decision
+            
+            return "IDLE"  # Default return if format is unexpected
 
-    payload = {
-        "inputs": full_prompt,
-        "parameters": {
-            "max_new_tokens": 50,
-            "temperature": temperature,
-            "return_full_text": False,
-            "do_sample": True
-        }
-    }
+        except Exception as e:
+            print(f"Attempt {attempt+1} failed: {e}")
+            time.sleep(2)  # Short delay before retrying
 
-    try:
-        response = requests.post(HF_API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Raise error if request fails
-        response_json = response.json()
+    return "IDLE"  # Return "IDLE" if all retries fail
 
-        # Ensure response contains expected key
-        if isinstance(response_json, list) and "generated_text" in response_json[0]:
-            response_text = response_json[0]["generated_text"]
-            if 'Final decision:' in response_text:
-                action = response_text.split('Final decision:')[-1].strip().upper()
-                return action.split('.')[0]  # Take first sentence only
-            return "IDLE"
-        else:
-            print(f"Unexpected response format: {response_json}")
-            return "IDLE"
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error with Qwen API: {str(e)}")
-        time.sleep(1)
-        return "IDLE"
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        return "IDLE"
-        
 # Keep the same action mapping function
 def map_llm_action_to_label(llm_act):
     """
@@ -375,7 +375,7 @@ if __name__ == "__main__":
         episode_score = 0
         episode_actions = []
         
-        actions_file_path = os.path.join(predictions_dir, f'episode_{episode}_actions_{current_model}.txt')
+        actions_file_path = os.path.join(predictions_dir, f'episode_{episode}_actions.txt')
         
         with open(actions_file_path, 'w') as action_file:
             (obs, info), done, truncated = env.reset(), False, False
@@ -384,7 +384,7 @@ if __name__ == "__main__":
                 prompt1, assist1, prompt2 = MyHighwayEnvLLM(vehicleCount).prompt_design_safe(obs)
                 
                 # Get action from current model
-                llm_act = claude_action(prompt1, assist1, prompt2, model_id=model_id).strip().split('.')[0]
+                llm_act = qwen_action(prompt1, assist1, prompt2).strip().split('.')[0]
                 action = map_llm_action_to_label(llm_act)
                 
                 obs, reward, done, truncated, info = env.step(int(action))
@@ -424,3 +424,6 @@ if __name__ == "__main__":
     # Save detailed results to CSV
     results_df = pd.DataFrame(model_results['episode_data'])
     results_df.to_csv(f'{predictions_dir}/{model_name}_results.csv', index=False)
+
+
+
