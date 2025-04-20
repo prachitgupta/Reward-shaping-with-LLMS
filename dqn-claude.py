@@ -377,7 +377,7 @@ class MyHighwayEnvLLM(gym.Env):
         ##
         obs_flat = obs.flatten() # Flatten and reshape observation
     
-        obs_processed = extract_features_from_dataset(obs_flat,prev_action)
+        obs_processed = self.extract_features_from_dataset(obs_flat,prev_action)
         #processed_obs.append(obs_processed)
         print(obs_processed)
 
@@ -389,7 +389,7 @@ class MyHighwayEnvLLM(gym.Env):
         rf_model_minor = joblib.load("models_try/minor_rf_model_upsampled.pkl")
         
         obs_flat = obs.flatten()  # Flatten and reshape observation
-        obs_processed = extract_features_from_dataset(obs_flat, prev_action)
+        obs_processed = self.extract_features_from_dataset(obs_flat, prev_action)
         
         # Get the binary prediction and probabilities
         binary_pred = rf_model_binary.predict(obs_processed)[0]
@@ -416,7 +416,7 @@ class MyHighwayEnvLLM(gym.Env):
             # ##claude
             # llm_response = self.claude_query(obs)
             ##groq
-            Class, Class_prob, llm_response, action_prob = rf_query(obs, prev_action)
+            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, prev_action)
 
             l_acts  = 0
 
@@ -456,14 +456,15 @@ if __name__ == "__main__":
                 policy_kwargs=dict(net_arch=[256, 256]),
                 learning_rate=5e-4,
                 buffer_size=15000,
-                learning_starts=50,
+                learning_starts=200,
                 batch_size=32,
                 gamma=0.8,
                 train_freq=1,
                 gradient_steps=1,
                 target_update_interval=50,
                 exploration_fraction=0.7,
-                verbose=1)
+                verbose=1,
+                tensorboard_log='highway_dqn/')
 
     model.learn(int(100))
     model.save('models/prachit_model_claude')
