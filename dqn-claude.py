@@ -289,7 +289,7 @@ class MyHighwayEnvLLM(gym.Env):
         # Return the three prompts
         return prompt1, assist1, prompt2
     
-    def extract_features_from_dataset(row,prev_action):
+    def extract_features_from_dataset(self,row):
         """
         Extract features from the dataset based on the given criteria.
         """
@@ -353,7 +353,7 @@ class MyHighwayEnvLLM(gym.Env):
             closest_right_lane_dist = distances[closest_right_index]
             relative_velocity_right_lane = relative_velocities[closest_right_index]
 
-        prev_action = prev_action
+        prev_action = self.prev_action_value
 
         # Append computed features
         processed_data.append([
