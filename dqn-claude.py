@@ -383,14 +383,14 @@ class MyHighwayEnvLLM(gym.Env):
         print(obs_processed)
 
 
-    def rf_query(obs, prev_action):
+    def rf_query(obs):
         # Load the models
         rf_model_binary = joblib.load('models_try/binary_rf_model_collision_free_upsampled.pkl')
         rf_model_major = joblib.load("models_try/major_rf_model_down_upsampled.pkl")
         rf_model_minor = joblib.load("models_try/minor_rf_model_upsampled.pkl")
         
         obs_flat = obs.flatten()  # Flatten and reshape observation
-        obs_processed = self.extract_features_from_dataset(obs_flat, prev_action)
+        obs_processed = self.extract_features_from_dataset(obs_flat, self.prev_action_value)
         
         # Get the binary prediction and probabilities
         binary_pred = rf_model_binary.predict(obs_processed)[0]
@@ -417,7 +417,7 @@ class MyHighwayEnvLLM(gym.Env):
             # ##claude
             # llm_response = self.claude_query(obs)
             ##groq
-            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, self.prev_action_value)
+            Class, Class_prob, llm_response, action_prob = self.rf_query(obs)
 
             l_acts  = 0
 
