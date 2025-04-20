@@ -383,7 +383,7 @@ class MyHighwayEnvLLM(gym.Env):
         print(obs_processed)
 
 
-    def rf_query(obs):
+    def rf_query(self, obs):
         # Load the models
         rf_model_binary = joblib.load('models_try/binary_rf_model_collision_free_upsampled.pkl')
         rf_model_major = joblib.load("models_try/major_rf_model_down_upsampled.pkl")
