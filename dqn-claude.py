@@ -184,6 +184,7 @@ class MyHighwayEnvLLM(gym.Env):
         self.env = gym.make("highway-v0",render_mode='rgb_array', config= self.config)
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(vehicleCount, 5), dtype=np.float32)
+        self.prev_action_value = 4
     
         
     def find_smallest_positive(self, arr):
@@ -416,7 +417,7 @@ class MyHighwayEnvLLM(gym.Env):
             # ##claude
             # llm_response = self.claude_query(obs)
             ##groq
-            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, self.prev_action)
+            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, self.prev_action_value)
 
             l_acts  = 0
 
@@ -438,6 +439,7 @@ class MyHighwayEnvLLM(gym.Env):
             comb_reward = dqn_reward
 
         self.prev_action = action_dict[action]
+        self.prev_action_value = action
 
         Reward = 1 / (1 + np.exp(-comb_reward))
 
