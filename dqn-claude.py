@@ -416,7 +416,7 @@ class MyHighwayEnvLLM(gym.Env):
             # ##claude
             # llm_response = self.claude_query(obs)
             ##groq
-            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, prev_action)
+            Class, Class_prob, llm_response, action_prob = self.rf_query(obs, self.prev_action)
 
             l_acts  = 0
 
@@ -467,4 +467,4 @@ if __name__ == "__main__":
                 tensorboard_log='highway_dqn/')
 
     model.learn(int(100))
-    model.save('models/prachit_model_claude')
+    model.save('models/prachit_model_claude_highway')
