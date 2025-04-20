@@ -37,7 +37,7 @@ api_key = os.getenv("HF_API_TOKEN")
 
 # Initialize Hugging Face client
 client = InferenceClient(
-    model="Qwen/Qwen2-1.5B-Instruct",
+    model="Qwen/QwQ-32B",
     api_key=api_key
 )
 
@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
     env = gym.make('highway-v0', render_mode='rgb_array', config=config)
 
-    num_episodes = 50
+    num_episodes = 5
 
     # Results storage
     results = {

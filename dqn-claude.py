@@ -112,26 +112,26 @@ def claude_action(prompt1, assist1, prompt2, model='claude-v1', max_tokens_to_sa
     
 #######
 
-###GROQ###
-from groq import *
+# ###GROQ###
+# from groq import *
 
-client = Groq(api_key = "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")
+# client = Groq(api_key = "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")
 
-def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
+# def groq_action(prompt1, assist1, prompt2, last_act='FASTER'):
 
-    chat_completion = client.chat.completions.create(messages=[{"role": "user", "content": prompt1},
-                                                           {"role": "assistant", "content": assist1},
-                                                           {"role": "user", "content": prompt2}], model="llama3-groq-70b-8192-tool-use-preview")
+#     chat_completion = client.chat.completions.create(messages=[{"role": "user", "content": prompt1},
+#                                                            {"role": "assistant", "content": assist1},
+#                                                            {"role": "user", "content": prompt2}], model="llama3-groq-70b-8192-tool-use-preview")
     
-    try:
-        action = chat_completion.choices[0].message.content.strip().split('Final decision: ')[1].strip().split('\'')[0]
-    except:
-        action = last_act
+#     try:
+#         action = chat_completion.choices[0].message.content.strip().split('Final decision: ')[1].strip().split('\'')[0]
+#     except:
+#         action = last_act
 
-    return action
+#     return action
 
 
-########
+# ########
 
 def map_llm_action_to_label(llm_act):
     """
@@ -288,24 +288,122 @@ class MyHighwayEnvLLM(gym.Env):
         # Return the three prompts
         return prompt1, assist1, prompt2
     
-    def groq_query(self,obs):
-        # Generate prompt for LLM
-        prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
-        ##ask for claude response
-        llm_act = groq_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
-        ##int action
-        action = map_llm_action_to_label(llm_act)
-        return action
+    def extract_features_from_dataset(row,prev_action):
+        """
+        Extract features from the dataset based on the given criteria.
+        """
+        processed_data = []
+
+        # Ego vehicle features
+        ego_features = row[:5]
+        ego_lane = ego_features[2] // 4 + 1  # Lane ID of ego vehicle
+        ego_speed = ego_features[3]  # Speed of ego vehicle
+
+        # Other vehicles' features
+        other_vehicles = row[5:50].reshape(9, 5)  # 9 vehicles, 5 features each
+        
+        # Separate features of other vehicles
+        other_lanes = other_vehicles[:, 2] // 4 + 1  # Lane IDs of other vehicles
+        distances = np.abs(other_vehicles[:, 1] - ego_features[1])  # Distances from ego vehicle
+        relative_velocities = other_vehicles[:, 3] - ego_speed  # Relative velocities
+
+        # Number of vehicles in ego lane and adjacent lanes
+        vehicles_in_ego_lane = np.sum(other_lanes == ego_lane)
+        vehicles_in_left_lane = np.sum(other_lanes == ego_lane - 1)
+        vehicles_in_right_lane = np.sum(other_lanes == ego_lane + 1)
+
+        ## Closest vehicles
+        closest_ego_index = np.where(other_lanes == ego_lane, distances, np.inf).argmin() if vehicles_in_ego_lane != 0 else np.nan
+        closest_left_index = np.where(other_lanes == ego_lane - 1, distances, np.inf).argmin() if vehicles_in_left_lane != 0 else np.nan
+        closest_right_index = np.where(other_lanes == ego_lane + 1, distances, np.inf).argmin() if vehicles_in_right_lane != 0 else np.nan
+
+        # Distances of other vehicles
+        ## Ego lane
+        if np.isnan(closest_ego_index):
+            closest_in_ego_lane_dist = 10000  # Assign large value for no vehicle
+            relative_velocity_ego_lane = 10000 
+        else:
+            closest_in_ego_lane_dist = distances[closest_ego_index]
+            relative_velocity_ego_lane = relative_velocities[closest_ego_index]
+        
+        ## Left lane
+        if np.isnan(closest_left_index):
+            # Check if the left lane is non-existent (i.e., topmost lane)
+            if ego_lane == 1:
+                closest_left_lane_dist = 0  # No lane to the left of topmost lane
+                relative_velocity_left_lane = 0  # No vehicle in non-existent lane
+            else:
+                closest_left_lane_dist = 10000  # No vehicle in left lane
+                relative_velocity_left_lane = 10000  # No vehicle in left lane
+        else:
+            closest_left_lane_dist = distances[closest_left_index]
+            relative_velocity_left_lane = relative_velocities[closest_left_index]
+        
+        ## Right lane
+        if np.isnan(closest_right_index):
+            # Check if the right lane is non-existent (i.e., bottommost lane)
+            if ego_lane == 4:
+                closest_right_lane_dist = 0  # No lane to the right of bottommost lane
+                relative_velocity_right_lane = 0  # No vehicle in non-existent lane
+            else:
+                closest_right_lane_dist = 10000  # No vehicle in right lane
+                relative_velocity_right_lane = 10000  # No vehicle in right lane
+        else:
+            closest_right_lane_dist = distances[closest_right_index]
+            relative_velocity_right_lane = relative_velocities[closest_right_index]
+
+        prev_action = prev_action
+
+        # Append computed features
+        processed_data.append([
+            vehicles_in_ego_lane,
+            vehicles_in_left_lane,
+            vehicles_in_right_lane,
+            closest_in_ego_lane_dist,
+            closest_left_lane_dist,
+            closest_right_lane_dist,
+            relative_velocity_ego_lane,
+            relative_velocity_left_lane,
+            relative_velocity_right_lane,
+            prev_action
+        ])
+
+        return np.array(processed_data)
+
+    def process(obs,prev_action):
+        ##load model
+        #rf_model = joblib.load("models_try/rf_test_no_smote")
+        #print(f"Model loaded")
+        ##
+        obs_flat = obs.flatten() # Flatten and reshape observation
     
-        ##claude action
-    def claude_query(self, obs):
-        # Generate prompt for LLM
-        prompt1, assist1, prompt2 = self.prompt_design_safe(obs)
-        ##ask for claude response
-        llm_act = claude_action(prompt1, assist1, prompt2, self.prev_action).strip().split('.')[0]
-        ##int action
-        action = map_llm_action_to_label(llm_act)
-        return action
+        obs_processed = extract_features_from_dataset(obs_flat,prev_action)
+        #processed_obs.append(obs_processed)
+        print(obs_processed)
+
+
+    def rf_query(obs, prev_action):
+        # Load the models
+        rf_model_binary = joblib.load('models_try/binary_rf_model_collision_free_upsampled.pkl')
+        rf_model_major = joblib.load("models_try/major_rf_model_down_upsampled.pkl")
+        rf_model_minor = joblib.load("models_try/minor_rf_model_upsampled.pkl")
+        
+        obs_flat = obs.flatten()  # Flatten and reshape observation
+        obs_processed = extract_features_from_dataset(obs_flat, prev_action)
+        
+        # Get the binary prediction and probabilities
+        binary_pred = rf_model_binary.predict(obs_processed)[0]
+        binary_pred_prob = rf_model_binary.predict_proba(obs_processed)[0]
+        
+        # Get the minor or major class prediction and probabilities
+        if binary_pred == 0:
+            minor_pred = rf_model_minor.predict(obs_processed)[0]
+            minor_pred_prob = rf_model_minor.predict_proba(obs_processed)[0]
+            return [binary_pred, binary_pred_prob, minor_pred, minor_pred_prob]
+        else:
+            major_pred = rf_model_major.predict(obs_processed)[0]
+            major_pred_prob = rf_model_major.predict_proba(obs_processed)[0]
+            return [binary_pred, binary_pred_prob, major_pred, major_pred_prob]
     
     def step(self, action):
 
@@ -318,7 +416,7 @@ class MyHighwayEnvLLM(gym.Env):
             # ##claude
             # llm_response = self.claude_query(obs)
             ##groq
-            llm_response = self.groq_query(obs)
+            Class, Class_prob, llm_response, action_prob = rf_query(obs, prev_action)
 
             l_acts  = 0
 
