@@ -371,16 +371,16 @@ class MyHighwayEnvLLM(gym.Env):
 
         return np.array(processed_data)
 
-    def process(obs,prev_action):
-        ##load model
-        #rf_model = joblib.load("models_try/rf_test_no_smote")
-        #print(f"Model loaded")
-        ##
-        obs_flat = obs.flatten() # Flatten and reshape observation
+    # def process(obs,prev_action):
+    #     ##load model
+    #     #rf_model = joblib.load("models_try/rf_test_no_smote")
+    #     #print(f"Model loaded")
+    #     ##
+    #     obs_flat = obs.flatten() # Flatten and reshape observation
     
-        obs_processed = self.extract_features_from_dataset(obs_flat,prev_action)
-        #processed_obs.append(obs_processed)
-        print(obs_processed)
+    #     obs_processed = self.extract_features_from_dataset(obs_flat,prev_action)
+    #     #processed_obs.append(obs_processed)
+    #     print(obs_processed)
 
 
     def rf_query(self, obs):
@@ -390,7 +390,7 @@ class MyHighwayEnvLLM(gym.Env):
         rf_model_minor = joblib.load("models_try/minor_rf_model_upsampled.pkl")
         
         obs_flat = obs.flatten()  # Flatten and reshape observation
-        obs_processed = self.extract_features_from_dataset(obs_flat, self.prev_action_value)
+        obs_processed = self.extract_features_from_dataset(obs_flat)
         
         # Get the binary prediction and probabilities
         binary_pred = rf_model_binary.predict(obs_processed)[0]
