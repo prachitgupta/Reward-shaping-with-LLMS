@@ -148,19 +148,19 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes, max_ste
 
             # -------------------------------------------
             # Get ego lane
-            ego_vehicle = env.unwrapped.vehicle
+            ego_vehicle = env.env.unwrapped.vehicle
             ego_position = ego_vehicle.position
             ego_heading = ego_vehicle.heading
             ego_lane = env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
 
             # Get all other vehicles
-            all_vehicles = env.unwrapped.road.vehicles
+            all_vehicles = env.env.unwrapped.road.vehicles
             other_vehicles = [v for v in all_vehicles if v is not ego_vehicle]
 
             # Get the lane index of each other vehicle
             veh_lanes = []
             for v in other_vehicles:
-                v_lane = env.unwrapped.road.network.get_closest_lane_index(v.position, v.heading)[2]
+                v_lane =env.env.unwrapped.road.network.get_closest_lane_index(v.position, v.heading)[2]
                 veh_lanes.append(v_lane)
 
             # Count how many vehicles share the ego lane
@@ -453,5 +453,5 @@ if __name__ == "__main__":
     #     lane_id_range=[0, 1, 2, 3],  # Define initial lanes to explore
     #     ego_spacing_range=(0, 20)  # Define range for ego vehicle spacing
     # )
-    generate_dataset_with_claude_for_specific_actions(env = env.env, num_episodes=500, max_steps=50, file_name1="datasets_roundabout_episodes_all.csv", file_name2="datasets_roundabout_collision_free_all.csv")
+    generate_dataset_with_claude_for_specific_actions(env = env, num_episodes=500, max_steps=50, file_name1="datasets_roundabout_episodes_all.csv", file_name2="datasets_roundabout_collision_free_all.csv")
     
