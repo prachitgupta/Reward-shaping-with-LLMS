@@ -320,7 +320,7 @@ if __name__ == ("__main__"):
 
     ##video folder path
     video_folder = "videos"
-    model_name = "test_claude/safe_roundabout"
+    model_name = "roundabout/safe_roundabout"
     video_path = f"{video_folder}/{model_name}"
 
     ##wrap video
