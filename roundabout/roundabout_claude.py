@@ -119,7 +119,7 @@ class MyRoundaboutEnvLLM(gym.Env):
                 "target_speeds": np.linspace(0, 32, 9),
             },
             "duration": 40,
-            "vehicles_density": 2,
+            "vehicles_density": 2.5,
             "show_trajectories": True,
             "render_agent": True,
         }
