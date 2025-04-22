@@ -151,7 +151,7 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes, max_ste
             ego_vehicle = env.env.unwrapped.vehicle
             ego_position = ego_vehicle.position
             ego_heading = ego_vehicle.heading
-            ego_lane = env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
+            ego_lane = env.env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
 
             # Get all other vehicles
             all_vehicles = env.env.unwrapped.road.vehicles
