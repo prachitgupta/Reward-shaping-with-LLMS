@@ -107,6 +107,7 @@ class MyRoundaboutEnvLLM(gym.Env):
                 "normalize": False,
                 "see_behind": True,
                 "duration": 11,
+                "vehicles_count": 4,
                 "features_range": {
                         "x": [-100, 100],
                         "y": [-100, 100],

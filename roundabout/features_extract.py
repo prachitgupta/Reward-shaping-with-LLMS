@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-###
-##to do  find lane id of both understand roundabout data
 # Define a function to extract the desired features
 def extract_features_from_dataset(data):
     """
@@ -13,8 +11,7 @@ def extract_features_from_dataset(data):
     for i, row in enumerate(data):
         # Ego vehicle features
         ego_features = row[:5]
-        # Lane ID of ego vehicle
-
+        ego_lane = ego_features[2] // 4 + 1  # Lane ID of ego vehicle
         ego_speed = ego_features[3]  # Speed of ego vehicle
 
         # Other vehicles' features
@@ -22,8 +19,7 @@ def extract_features_from_dataset(data):
         actions = row[50]
         
         # Separate features of other vehicles
-        ##lane id 
-
+        other_lanes = other_vehicles[:, 2] // 4 + 1  # Lane IDs of other vehicles
         distances = np.abs(other_vehicles[:, 1] - ego_features[1])  # Distances from ego vehicle
         relative_velocities = other_vehicles[:, 3] - ego_speed  # Relative velocities
 

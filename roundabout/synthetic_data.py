@@ -140,27 +140,47 @@ def generate_dataset_with_claude_for_specific_actions(env, num_episodes=2, max_s
         actions_epi = []
 
         for step in range(max_steps):
-            # Generate prompts for Claude, forcing decisions for minority actions (left, right, fast)
             prompt1, assist1, prompt2 = env.prompt_design_safe(obs)
             llm_act = claude_action(prompt1, assist1, prompt2)
             action_label = map_llm_action_to_label(llm_act)
-            # Force only left, right, or fast actions
-
-            # if action_label not in [0,2,3]:
-            #     continue  # Skip episodes where the action is from the majority class (slow, idle)
-
-            # Convert LLM action to a numerical label
             
             print(f"Action label: {action_label}")
 
+            # -------------------------------------------
+            # Get ego lane
+            ego_vehicle = env.unwrapped.vehicle
+            ego_position = ego_vehicle.position
+            ego_heading = ego_vehicle.heading
+            ego_lane = env.unwrapped.road.network.get_closest_lane_index(ego_position, ego_heading)[2]
+
+            # Get all other vehicles
+            all_vehicles = env.unwrapped.road.vehicles
+            other_vehicles = [v for v in all_vehicles if v is not ego_vehicle]
+
+            # Get the lane index of each other vehicle
+            veh_lanes = []
+            for v in other_vehicles:
+                v_lane = env.unwrapped.road.network.get_closest_lane_index(v.position, v.heading)[2]
+                veh_lanes.append(v_lane)
+
+            # Count how many vehicles share the ego lane
+            veh_lanes = np.array(veh_lanes)
+            num_vehicles_same_lane = np.sum(veh_lanes == ego_lane)
+
+            # -------------------------------------------
+            # Append these features to the observation
+            obs_flat = obs.flatten()
+            obs_augmented =  np.concatenate([obs_flat, [ego_lane], veh_lanes])
+
             # Store transition
-            observations.append(obs.flatten())
+            observations.append(obs_augmented)
             actions.append(action_label)
 
-            ##per epi
-            observations_epi.append(obs.flatten())
+            ## Per-episode
+            observations_epi.append(obs_augmented)
             actions_epi.append(action_label)
-            
+
+            # Save progress
             save_and_go(observations, actions, file_name1)
 
             next_obs, reward, done, truncated, info = env.step(action_label)
@@ -258,6 +278,7 @@ class MyRoundaboutEnvLLM(gym.Env):
                 "normalize": False,
                 "see_behind": True,
                 "duration": 11,
+                "vehicles_count": 4,
                 "features_range": {
                         "x": [-100, 100],
                         "y": [-100, 100],
