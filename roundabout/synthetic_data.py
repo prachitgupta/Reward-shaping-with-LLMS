@@ -267,7 +267,7 @@ class MyRoundaboutEnvLLM(gym.Env):
     Custom Gym environment for highway driving with LLM prompts.
     """
     def __init__(self):
-        super(MyHighwayEnvLLM, self).__init__()
+        super(MyRoundaboutEnvLLM, self).__init__()
         self.prev_action = 'FASTER'
 
         self.config = {
