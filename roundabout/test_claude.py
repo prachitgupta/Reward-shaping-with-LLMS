@@ -351,7 +351,7 @@ if __name__ == "__main__":
                 prompt1, assist1, prompt2 =  MyRoundaboutEnvLLM().prompt_design_safe(obs)
                 
                 # Get action from current model
-                llm_act = claude_action(prompt1, assist1, prompt2, model_id=model_id).strip().split('.')[0]
+                llm_act = claude_action(prompt1, assist1, prompt2).strip().split('.')[0]
                 action = map_llm_action_to_label(llm_act)
                
                 obs, reward, done, truncated, info = env.step(int(action))
