@@ -331,7 +331,7 @@ if __name__ == "__main__":
     # Create and configure environment
     env = gym.make("roundabout-v0",render_mode='rgb_array', config= config)
     # Wrap environment with video recording
-    env = RecordVideo(env, video_folder=video_dir, episode_trigger=lambda episode_id: True)
+    #env = RecordVideo(env, video_folder=video_dir, episode_trigger=lambda episode_id: True)
 
     prev_action = 4
     num_collisions = 0
