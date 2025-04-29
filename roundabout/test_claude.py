@@ -348,7 +348,12 @@ if __name__ == "__main__":
         with open(actions_file_path, 'w') as action_file:
             (obs, info), done, truncated = env.reset(), False, False
             while not (done or truncated):
-                Class, Class_prob, action, action_prob = claude_query(obs, prev_action)
+                prompt1, assist1, prompt2 =  MyRoundaboutEnvLLM().prompt_design_safe(obs)
+                
+                # Get action from current model
+                llm_act = claude_action(prompt1, assist1, prompt2, model_id=model_id).strip().split('.')[0]
+                action = map_llm_action_to_label(llm_act)
+               
                 obs, reward, done, truncated, info = env.step(int(action))
                 episode_score += reward  # Accumulate episode score
                 
