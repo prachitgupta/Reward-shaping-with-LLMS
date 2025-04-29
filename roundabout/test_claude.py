@@ -358,7 +358,7 @@ if __name__ == "__main__":
                 episode_score += reward  # Accumulate episode score
                 
                 # Log the action and probabilities
-                action_file.write(f"Class = {Class} (Probability: {Class_prob}) Action: {action} (Probability: {action_prob})\n")
+                action_file.write(f"Action: {action}\n")
                 
                 prev_action = action
                 
