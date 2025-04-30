@@ -310,7 +310,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         return prompt1, assist1, prompt2
 
     
-    def extract_features_from_dataset(row,prev_action):
+    def extract_features_from_dataset(self,row):
 
         """
         Extract features from the dataset based on the given criteria.
@@ -375,7 +375,7 @@ class MyRoundaboutEnvLLM(gym.Env):
             closest_right_lane_dist = distances[closest_right_index]
             relative_velocity_right_lane = relative_velocities[closest_right_index]
 
-        previous_action_1 = prev_action
+        previous_action_1 = self.prev_action_value
         # Append computed features
         processed_data.append([
             vehicles_in_ego_lane,
@@ -395,9 +395,9 @@ class MyRoundaboutEnvLLM(gym.Env):
 
         return np.array(processed_data)
 
-    def process(env, obs,prev_action):
+    def process(self, obs):
         ##load model
-    
+        env = self.env
         ego_vehicle = env.env.unwrapped.vehicle
         ego_position = ego_vehicle.position
         ego_heading = ego_vehicle.heading
@@ -421,17 +421,17 @@ class MyRoundaboutEnvLLM(gym.Env):
         obs_flat = obs.flatten()
         obs_augmented =  np.concatenate([obs_flat, [ego_lane], veh_lanes])
     
-        obs_processed = extract_features_from_dataset(obs_augmented,prev_action)
+        obs_processed = self.extract_features_from_dataset(obs_augmented)
         #processed_obs.append(obs_processed)
         return obs_processed
 
 
-    def rf_query(env, obs, prev_action):
+    def rf_query(self, obs):
         # Load the models
         rf_model_binary = joblib.load('models_try/binary_rf_model_collision_free_upsampled.pkl')
         rf_model_major = joblib.load("models_try/major_rf_model_tuned.pkl")
         # Flatten and reshape observation
-        obs_processed = process(env, obs, prev_action)
+        obs_processed = self.process(env, obs)
         
         # Get the binary prediction and probabilities
         binary_pred = rf_model_binary.predict(obs_processed)[0]
