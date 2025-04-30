@@ -431,7 +431,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         rf_model_binary = joblib.load('models_try/binary_rf_model_collision_free_upsampled.pkl')
         rf_model_major = joblib.load("models_try/major_rf_model_tuned.pkl")
         # Flatten and reshape observation
-        obs_processed = self.process(env, obs)
+        obs_processed = self.process(obs)
         
         # Get the binary prediction and probabilities
         binary_pred = rf_model_binary.predict(obs_processed)[0]
