@@ -191,7 +191,7 @@ class MyRoundaboutEnvLLM(gym.Env):
         self.env = gym.make("roundabout-v0",render_mode='rgb_array', config= self.config)
         self.action_space = self.env.action_space
 
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(4, 5), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(5, 5), dtype=np.float32)
         self.prev_action_value = 4
     
         
