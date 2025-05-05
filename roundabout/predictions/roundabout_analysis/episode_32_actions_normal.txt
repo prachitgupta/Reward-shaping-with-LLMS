@@ -1,0 +1,7 @@
+Class = 1 (Probability: [0. 1.]) Action: 0.0 (Probability: [0.48040782 0.18568025 0.14144552 0.1924664 ])
+Class = 1 (Probability: [0. 1.]) Action: 4.0 (Probability: [0.025 0.03  0.03  0.915])
+Class = 1 (Probability: [0.01 0.99]) Action: 3.0 (Probability: [0.01  0.205 0.67  0.115])
+Class = 1 (Probability: [0. 1.]) Action: 1.0 (Probability: [0.         0.68773623 0.20726377 0.105     ])
+Class = 1 (Probability: [0. 1.]) Action: 3.0 (Probability: [0.015 0.125 0.75  0.11 ])
+Class = 1 (Probability: [0. 1.]) Action: 1.0 (Probability: [0.         0.96430608 0.03069392 0.005     ])
+Class = 1 (Probability: [0. 1.]) Action: 3.0 (Probability: [0.    0.065 0.72  0.215])

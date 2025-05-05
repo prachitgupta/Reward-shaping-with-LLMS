@@ -1,0 +1,2 @@
+Class = 1 (Probability: [0. 1.]) Action: 3.0 (Probability: [0.04669851 0.15693593 0.70208469 0.09428087])
+Class = 1 (Probability: [0. 1.]) Action: 4.0 (Probability: [0.         0.16532772 0.09601514 0.73865714])
