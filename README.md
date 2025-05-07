@@ -26,7 +26,7 @@ Run the Dataset Generation Script:
 Run the dataset generation script with your desired configurations:
 
 ```bash
-python3 random_data_claude.py 
+python3 synthetic_data.py 
 ```
 Modify Hyperparameters:
 
@@ -35,3 +35,29 @@ Adjust hyperparameters such as episodes, samples_per_episode, vehicleCount_range
 Check the Generated Dataset:
 
 The generated dataset will be saved as a CSV file in the datasets directory. 
+
+## Evaluation and Performance analysis of various Models
+
+Run the 'visualize.ipynb' for visual feedback and 'analysis.ipynb'  notebook:
+
+datasets, predictions, trained models and video files canbe stored in their respective directories
+
+The generated dataset will be saved as a CSV file in the datasets directory. 
+
+## Reward shaping using claude 3.5
+
+```bash
+python3 dqn-claude.py 
+```
+
+## Feature extraction
+
+```bash
+python3 features_extract.py 
+```
+
+## train rf models (or any other ML model(xgb,svm, NN)) with required preprocessing
+
+Run the 'rf_multiple.ipynb' notebook (various code  snippets execute different pre processing steps):
+
+## For the roundabout env navigate to the "roundabout" directory containing the required scripts,datasets and models for the environment.
